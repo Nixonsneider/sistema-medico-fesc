@@ -1,2 +1,5 @@
 # Archivos generados por Maven
 target/
+
+# Configuración local de PostgreSQL (contiene credenciales)
+config/database.properties

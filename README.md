@@ -6,7 +6,7 @@ Proyecto de una plataforma web para gestionar pacientes, médicos, especialidade
 
 El repositorio contiene la estructura inicial de una aplicación Java web con Maven y Jakarta EE, un endpoint REST de prueba, un esquema SQL y la documentación de los módulos previstos.
 
-Los módulos de gestión médica todavía no están implementados en Java. No hay entidades de persistencia, servicios, repositorios ni operaciones CRUD. La unidad de persistencia está declarada, pero aún no tiene configuración de conexión a la base de datos.
+Los módulos de gestión médica todavía no están implementados en Java. No hay entidades de persistencia, servicios, repositorios ni operaciones CRUD. La persistencia usa Hibernate y un pool HikariCP, con conexión PostgreSQL configurada en un archivo externo.
 
 ## Tecnologías y configuración
 
@@ -14,15 +14,16 @@ Los módulos de gestión médica todavía no están implementados en Java. No ha
 | --- | --- |
 | Java | Compilación con nivel de lenguaje y bytecode Java 17 |
 | Maven | Gestión de dependencias y construcción del proyecto |
-| Jakarta EE API | `11.0.0-M1`, con alcance `provided` |
-| Jakarta REST | Configuración de rutas y endpoint de prueba |
-| Jakarta Persistence | Descriptor `persistence.xml`, versión 3.0 |
-| CDI | Descriptor `beans.xml`, con descubrimiento `all` |
+| Jakarta EE API | `11.0.0`, con alcance `provided` |
+| Jakarta REST | Jersey 4.0.3 |
+| Conexiones | HikariCP 7.0.2 y PostgreSQL JDBC 42.7.14 |
+| Jakarta Persistence | Hibernate ORM 7.4.13.Final; transacciones `RESOURCE_LOCAL` |
+| CDI | Weld Servlet 6.0.3.Final |
 | Empaquetado | WAR: `sistemaWebMedico-1.0-SNAPSHOT.war` |
 | Base de datos | Esquema SQL con sintaxis de PostgreSQL |
 | IDE | Configuración compartida de Apache NetBeans |
 
-La API de Jakarta EE tiene alcance `provided`: sus implementaciones deben estar disponibles en el entorno de ejecución. La configuración de NetBeans señala Tomcat como servidor, pero el proyecto no incluye implementaciones de Jakarta REST, Persistence o CDI. Debe verificarse que el servidor elegido proporcione las capacidades utilizadas o configurar las implementaciones correspondientes antes del despliegue.
+El servidor de referencia es Tomcat 11 con JDK 17 o superior (verificado con JDK 21). El WAR incluye Jersey, Weld, Hibernate, HikariCP y el controlador PostgreSQL. La API Jakarta EE sigue siendo `provided`; Tomcat no ofrece la plataforma completa. Las transacciones JPA serán locales y gestionadas explícitamente por la aplicación.
 
 ## Estructura del proyecto
 
@@ -38,7 +39,7 @@ sistemaWebMedico/
 │   │   └── resources/
 │   │       └── JakartaEE11Resource.java
 │   ├── resources/META-INF/
-│   │   └── persistence.xml           # Unidad de persistencia sin configurar
+│   │   └── persistence.xml           # Unidad JPA con proveedor Hibernate
 │   └── webapp/
 │       ├── index.html                # Página de entrada
 │       ├── META-INF/context.xml      # Contexto /sistemaWebMedico
@@ -98,9 +99,9 @@ Las citas se crean por defecto como `PROGRAMADA`. Los campos obligatorios y opci
 
 ### Requisitos
 
-- JDK compatible con la API de Jakarta EE utilizada y con la compilación configurada para Java 17.
+- JDK 17 o superior; compilación con `release 17`.
 - Apache Maven disponible en la terminal, o el Maven integrado de NetBeans.
-- Un servidor con las implementaciones de Jakarta necesarias para ejecutar la aplicación.
+- Apache Tomcat 11.
 - PostgreSQL y su cliente `psql` si se desea crear el esquema de datos.
 
 ### Compilar
@@ -123,7 +124,7 @@ psql -h localhost -U <usuario> -d <base_de_datos> -f schema.sql
 
 El script crea las tablas; no crea la base de datos ni inserta datos iniciales. Está pensado para una base vacía y no incluye comprobaciones para volver a ejecutarlo sobre tablas existentes.
 
-Para conectar la aplicación todavía se requiere configurar el controlador JDBC, el origen de datos y la unidad `my_persistence_unit` en `src/main/resources/META-INF/persistence.xml`. El repositorio no define credenciales ni variables de entorno para esa conexión.
+La conexión se configura en `config/database.properties`, excluido de Git, a partir de `config/database.properties.example`. La base local prevista es `sistema-web-medico` y el usuario es `postgres`. Completar la contraseña localmente y configurar `-Dmedico.db.config` o `MEDICO_DB_CONFIG` con la ruta absoluta del archivo antes de iniciar Tomcat. Las instrucciones para NetBeans están en [Configuración local](docs/ConfiguracionLocal.md). Hibernate no crea ni modifica las tablas automáticamente.
 
 ### Desplegar y comprobar
 
@@ -141,7 +142,7 @@ Con el contexto declarado y un servidor local en el puerto 8080, la URL sería:
 http://localhost:8080/sistemaWebMedico/resources/jakartaee11
 ```
 
-La respuesta esperada es HTTP `200` con el cuerpo `ping Jakarta EE`. Este endpoint permite comprobar la ejecución de Jakarta REST; no consulta la base de datos.
+La respuesta esperada es HTTP `200` con el cuerpo `ping Jakarta EE`. Para verificar PostgreSQL a través de JPA, consultar `GET /<contexto>/resources/health/db`: responde `200` con `database OK`, o `503` si la conexión falla después del arranque. Una configuración ausente o inválida impide el arranque de la aplicación.
 
 ## Directrices de desarrollo
 

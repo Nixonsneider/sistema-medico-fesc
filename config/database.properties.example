@@ -1,0 +1,5 @@
+# Copiar como database.properties. Este archivo real está excluido de Git.
+# Se lee con java.util.Properties (usar escapes Unicode para caracteres no ASCII).
+db.url=jdbc:postgresql://localhost:5432/sistema-web-medico
+db.user=postgres
+db.password=CAMBIAR_LOCALMENTE

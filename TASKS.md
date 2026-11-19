@@ -1,6 +1,6 @@
 # Plan de desarrollo
 
-Estado: etapa 1 completada (requisitos y esquema unificados). Las etapas de implementación de la aplicación siguen pendientes.
+Estado: etapa 1 completada. Etapa 2 implementada y verificada en un entorno temporal; pendiente de comprobar contra la base del usuario cuando complete la contraseña local. Las etapas 3 a 11 siguen pendientes.
 
 El plan se basa en los requisitos de `docs/EstructuraProyecto.md`, el esquema `schema.sql` y la configuración actual del proyecto. Se avanzará módulo por módulo, dejando cada uno funcional y verificable antes de continuar.
 
@@ -17,13 +17,16 @@ El plan se basa en los requisitos de `docs/EstructuraProyecto.md`, el esquema `s
 
 ## 2. Dejar funcionando la base técnica
 
-- [ ] Verificar las versiones de Java, Jakarta EE y el servidor configurado en NetBeans.
-- [ ] Resolver las implementaciones que necesita Tomcat o acordar el servidor compatible antes de desarrollar los módulos.
-- [ ] Configurar PostgreSQL, el controlador JDBC y la unidad de persistencia.
-- [ ] Mantener las credenciales fuera del repositorio.
-- [ ] Comprobar compilación, despliegue y conexión a la base de datos.
+- [x] Verificar las versiones de Java, Jakarta EE y el servidor configurado en NetBeans: JDK 21.0.7, compilación con `release 17`, Jakarta EE API 11 estable y Tomcat 11.0.29.
+- [x] Resolver las implementaciones que necesita Tomcat: Jersey, Weld y Hibernate incluidos en el WAR.
+- [x] Configurar el controlador JDBC, el pool HikariCP y la unidad de persistencia con transacciones locales, sin generación automática del esquema.
+- [x] Mantener las credenciales fuera del repositorio mediante archivo externo y exclusión en `.gitignore`.
+- [x] Comprobar compilación, despliegue y conexión en una base temporal aislada: WAR generado, CDI iniciado y endpoints REST y JPA con respuesta HTTP 200.
+- [ ] Completar localmente `db.password` en `config/database.properties` y verificar la conexión a la base del usuario `sistema-web-medico`, con usuario `postgres`.
 
 **Resultado esperado:** aplicación compilable, desplegable y conectada a la base de datos.
+
+**Verificación realizada:** PostgreSQL 18 temporal en el puerto 55432 y Tomcat 11 temporal en el puerto 18080, dentro de `target/verification`. Se ejecutó `schema.sql` y se comprobaron `GET /resources/jakartaee11` y `GET /resources/health/db`. No se modificó la base existente del usuario. La configuración de NetBeans y la conexión local se explican en [Configuración local](docs/ConfiguracionLocal.md).
 
 ## 3. Organizar el código con una estructura sencilla
 
