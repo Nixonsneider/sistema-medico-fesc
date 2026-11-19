@@ -34,5 +34,5 @@ Las relaciones son:
 - UN diagnostico preescribe MUCHOS tratamientos
 - UNA orden puede tener UNO O MUCHOS detalles de orden.
 
-(En el archivo creacionEntidad.sql están las entidades que se crearan en la base de datos).
+(En el archivo schema.sql están las entidades que se crearan en la base de datos).
 
