@@ -87,12 +87,12 @@ El esquema incluye claves primarias autogeneradas, claves foráneas, campos úni
 
 | Campo | Valores permitidos |
 | --- | --- |
-| Estado de cita | `PENDIENTE`, `CONFIRMADA`, `CANCELADA`, `COMPLETADA` |
+| Estado de cita | `PROGRAMADA`, `CONFIRMADA`, `ATENDIDA`, `CANCELADA`, `NO_ASISTIO` |
 | Tipo de orden | `LABORATORIO`, `IMAGENOLOGIA`, `MEDICAMENTO`, `REMISION` |
 | Estado de orden | `PENDIENTE`, `COMPLETADA`, `CANCELADA` |
 | Tipo de diagnóstico | `PRESUNTIVO`, `DEFINITIVO`, `PRINCIPAL`, `SECUNDARIO` |
 
-Los requisitos de citas describen otros estados: `PROGRAMADA`, `CONFIRMADA`, `ATENDIDA`, `CANCELADA` y `NO_ASISTIO`. Esta diferencia entre documentación y SQL está pendiente de unificación antes de implementar el módulo.
+Las citas se crean por defecto como `PROGRAMADA`. Los campos obligatorios y opcionales, fechas, valores predeterminados y reglas de eliminación están unificados en [Requisitos y modelo de datos](docs/EstructuraProyecto.md). Las transiciones entre estados y las reglas de disponibilidad se definirán al implementar citas.
 
 ## Preparación y ejecución
 

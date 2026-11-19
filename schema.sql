@@ -1,3 +1,7 @@
+-- Esquema inicial para una base de datos PostgreSQL vacía.
+-- Reglas funcionales y campos: docs/EstructuraProyecto.md.
+-- No es un script de migración para bases de datos existentes.
+
 -- CREACIÓN DE LA ENTIDAD ESPECIALIDAD
 
 CREATE TABLE especialidad (
@@ -27,7 +31,7 @@ CREATE TABLE medico (
 -- CREACIÓN DE LA ENTIDAD PACIENTE
 
 CREATE TABLE paciente (
-    tipo_documento VARCHAR(20) NOT NULL DEFAULT '',
+    tipo_documento VARCHAR(20) NOT NULL CHECK (BTRIM(tipo_documento) <> ''),
     id_paciente INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     documento VARCHAR(20) NOT NULL UNIQUE,
     nombre VARCHAR(100) NOT NULL,
@@ -45,7 +49,8 @@ CREATE TABLE cita (
     id_cita INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     fecha_hora TIMESTAMPTZ NOT NULL,
     motivo TEXT NOT NULL,
-    estado_cita VARCHAR(50) NOT NULL DEFAULT 'PENDIENTE' CHECK(estado_cita IN('PENDIENTE', 'CONFIRMADA', 'CANCELADA', 'COMPLETADA')),
+    estado_cita VARCHAR(50) NOT NULL DEFAULT 'PROGRAMADA'
+        CHECK (estado_cita IN ('PROGRAMADA', 'CONFIRMADA', 'ATENDIDA', 'CANCELADA', 'NO_ASISTIO')),
     id_paciente INT NOT NULL,
     id_medico INT NOT NULL,
     CONSTRAINT fk_cita_paciente
@@ -80,7 +85,7 @@ CREATE TABLE orden (
     id_orden INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     tipo_orden VARCHAR(20) NOT NULL CHECK (tipo_orden IN('LABORATORIO', 'IMAGENOLOGIA', 'MEDICAMENTO', 'REMISION')),
     estado VARCHAR(20) NOT NULL DEFAULT 'PENDIENTE' CHECK (estado IN ('PENDIENTE', 'COMPLETADA', 'CANCELADA')),
-    fecha_orden DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_orden DATE NOT NULL DEFAULT CURRENT_DATE,
     observaciones TEXT NOT NULL,
     id_cita INT NOT NULL,
     CONSTRAINT fk_orden_cita
