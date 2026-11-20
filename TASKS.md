@@ -1,6 +1,6 @@
 # Plan de desarrollo
 
-Estado: etapa 1 completada. Etapa 2 implementada y verificada en un entorno temporal; pendiente de comprobar contra la base del usuario cuando complete la contraseña local. Las etapas 3 a 11 siguen pendientes.
+Estado: etapas 1, 2 y 3 completadas. El usuario confirmó la conexión a su base mediante la respuesta `database OK` al ejecutar el proyecto desde NetBeans. Las etapas 4 a 11 siguen pendientes.
 
 El plan se basa en los requisitos de `docs/EstructuraProyecto.md`, el esquema `schema.sql` y la configuración actual del proyecto. Se avanzará módulo por módulo, dejando cada uno funcional y verificable antes de continuar.
 
@@ -22,7 +22,7 @@ El plan se basa en los requisitos de `docs/EstructuraProyecto.md`, el esquema `s
 - [x] Configurar el controlador JDBC, el pool HikariCP y la unidad de persistencia con transacciones locales, sin generación automática del esquema.
 - [x] Mantener las credenciales fuera del repositorio mediante archivo externo y exclusión en `.gitignore`.
 - [x] Comprobar compilación, despliegue y conexión en una base temporal aislada: WAR generado, CDI iniciado y endpoints REST y JPA con respuesta HTTP 200.
-- [ ] Completar localmente `db.password` en `config/database.properties` y verificar la conexión a la base del usuario `sistema-web-medico`, con usuario `postgres`.
+- [x] Completar localmente `db.password` en `config/database.properties` y verificar la conexión a la base del usuario `sistema-web-medico`, con usuario `postgres`.
 
 **Resultado esperado:** aplicación compilable, desplegable y conectada a la base de datos.
 
@@ -30,20 +30,23 @@ El plan se basa en los requisitos de `docs/EstructuraProyecto.md`, el esquema `s
 
 ## 3. Organizar el código con una estructura sencilla
 
-- [ ] Mantener una sola aplicación Maven.
-- [ ] Organizar las responsabilidades en los siguientes paquetes propuestos, dentro de `com.nxn.sistemawebmedico`:
+- [x] Mantener una sola aplicación Maven.
+- [x] Organizar las responsabilidades en los siguientes paquetes, dentro de `com.nxn.sistemawebmedico`:
 
 | Paquete | Responsabilidad |
 | --- | --- |
+| `config` | Configuración técnica y ciclo de vida de persistencia. |
 | `entity` | Entidades y relaciones de persistencia. |
 | `enums` | Estados y tipos del dominio. |
 | `repository` | Consultas y acceso a datos. |
 | `service` | Validaciones, reglas y transacciones. |
 | `resources` | Endpoints REST. |
 
-- [ ] Mantener las vistas en `webapp`, con HTML, CSS y JavaScript, salvo que se defina otra tecnología.
+- [x] Mantener las vistas en `webapp`, con HTML, CSS y JavaScript.
 
 **Resultado esperado:** organización común para todos los módulos, sin incorporar estructuras innecesarias.
+
+**Resultado de la etapa:** seis paquetes documentados mediante `package-info.java`, estructura y flujo de responsabilidades actualizados en `README.md`, un solo proyecto Maven y las vistas conservadas en `src/main/webapp`. Los paquetes `entity`, `enums`, `repository` y `service` quedan preparados para las siguientes etapas sin adelantar su implementación. Se conservan la configuración REST y los endpoints existentes.
 
 ## 4. Crear el modelo de persistencia
 

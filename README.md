@@ -30,13 +30,22 @@ El servidor de referencia es Tomcat 11 con JDK 17 o superior (verificado con JDK
 ```text
 sistemaWebMedico/
 ├── .agents/skills/medical-ui-design/  # Directrices de diseño de interfaces
+├── config/
+│   └── database.properties.example  # Plantilla de conexión sin credenciales reales
 ├── docs/
+│   ├── ConfiguracionLocal.md         # Conexión, NetBeans y ejecución local
 │   ├── EstructuraProyecto.md         # Requisitos funcionales y relaciones
 │   └── ModuloReportes.md             # Especificación del módulo de reportes
 ├── src/main/
 │   ├── java/com/nxn/sistemawebmedico/
 │   │   ├── JakartaRestConfiguration.java
+│   │   ├── config/                  # Configuración y ciclo de vida de persistencia
+│   │   ├── entity/                  # Entidades JPA (pendientes de etapa 4)
+│   │   ├── enums/                   # Estados y tipos (pendientes de etapa 4)
+│   │   ├── repository/              # Consultas y acceso a datos
+│   │   ├── service/                 # Reglas de negocio y transacciones
 │   │   └── resources/
+│   │       ├── DatabaseHealthResource.java
 │   │       └── JakartaEE11Resource.java
 │   ├── resources/META-INF/
 │   │   └── persistence.xml           # Unidad JPA con proveedor Hibernate
@@ -49,10 +58,19 @@ sistemaWebMedico/
 ├── AGENTS.md                         # Instrucciones de trabajo del proyecto
 ├── nb-configuration.xml              # Configuración compartida de NetBeans
 ├── pom.xml                           # Dependencias y plugins de Maven
+├── TASKS.md                          # Plan y seguimiento del desarrollo
 └── schema.sql                        # Creación de las nueve tablas
 ```
 
 Maven genera los archivos compilados y el WAR en `target/`.
+
+### Organización del código
+
+Se mantiene una sola aplicación Maven con un único `pom.xml` y un WAR. Los paquetes Java están dentro de `com.nxn.sistemawebmedico`; cada paquete tiene un `package-info.java` con su responsabilidad.
+
+El flujo previsto para los módulos es `resources → service → repository`, utilizando las entidades de `entity` y los tipos de `enums`. Los servicios delimitarán las transacciones locales; los repositorios realizarán las consultas con `EntityManager`. `config` mantiene el ciclo de vida de la fábrica JPA y del pool. `JakartaRestConfiguration` conserva la configuración REST en el paquete raíz y la ruta `/resources`.
+
+Los paquetes de dominio y acceso a datos quedan preparados para las siguientes etapas mediante su documentación, sin clases de negocio vacías. Los endpoints técnicos existentes conservan su comportamiento. Las vistas permanecen en `src/main/webapp`, con HTML, CSS y JavaScript; no se incorpora otro proyecto frontend ni nuevas dependencias en esta etapa.
 
 ## Módulos previstos
 
