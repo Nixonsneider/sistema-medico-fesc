@@ -7,7 +7,7 @@
 - Tomcat 11 (instalación local detectada: `D:\Documents\apache-tomcat-11.0.29`).
 - PostgreSQL (en este equipo, PostgreSQL 18).
 
-El WAR incluye Jersey para REST, Weld para CDI, Hibernate para JPA, HikariCP para el pool y el controlador PostgreSQL. No se necesita copiar controladores a Tomcat. No se utilizan EJB, JTA ni inyección automática mediante `@PersistenceContext`; las futuras operaciones usarán transacciones `RESOURCE_LOCAL`.
+El WAR incluye Jersey para REST, Weld para CDI, Hibernate para JPA, HikariCP para el pool y el controlador PostgreSQL. Las APIs necesarias llegan con esas dependencias; la API Servlet 6.1 es `provided`, suministrada por Tomcat. No se necesita copiar controladores a Tomcat. No se utilizan EJB, JTA ni inyección automática mediante `@PersistenceContext`; las futuras operaciones usarán transacciones `RESOURCE_LOCAL`.
 
 ## Archivo de conexión
 
@@ -58,3 +58,18 @@ GET http://localhost:8080/sistemaWebMedico/resources/health/db
 ```
 
 El segundo endpoint ejecuta `SELECT 1` mediante un `EntityManager`; no lee datos clínicos ni comprueba la existencia de las nueve tablas. Si la conexión deja de estar disponible tras el arranque, devuelve `503` sin detalles internos.
+
+## Pruebas del modelo JPA
+
+`mvn test` arranca la unidad de persistencia sin conexión para comprobar el reconocimiento de las nueve entidades. Las pruebas PostgreSQL quedan omitidas si no se indica `medico.test.jdbcUrl`.
+
+Para ejecutarlas, crear una base vacía dedicada a pruebas, cargar `schema.sql` y usar una URL que apunte únicamente a esa base. No usar la base de trabajo: las pruebas insertan datos ficticios y revierten las transacciones, pero consumen valores de las secuencias.
+
+Ejemplo desde PowerShell, para una instancia de pruebas ya iniciada en el puerto 55433:
+
+```powershell
+# Si la instancia exige contraseña, definir MEDICO_TEST_DB_PASSWORD localmente.
+& 'C:/Program Files/Apache NetBeans/java/maven/bin/mvn.cmd' '-Dmedico.test.jdbcUrl=jdbc:postgresql://127.0.0.1:55433/medico_pruebas' '-Dmedico.test.user=postgres' test
+```
+
+Las pruebas validan el esquema existente con Hibernate y comprueban el recorrido por las nueve entidades, los estados almacenados como texto, las fechas, la restricción de una historia por paciente y la protección frente al borrado de una cita con información clínica asociada. No crean ni migran tablas.

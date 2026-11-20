@@ -2,7 +2,7 @@
 
 La plataforma permitirá gestionar especialidades, médicos, pacientes, citas, historias clínicas, diagnósticos, tratamientos y órdenes médicas con sus detalles.
 
-Este documento define las reglas funcionales de la primera versión. [schema.sql](../schema.sql) define sus tablas, nombres de columnas, tipos, longitudes y restricciones. Los futuros modelos Java y formularios deberán respetar ambos archivos. Los módulos aún no están implementados.
+Este documento define las reglas funcionales de la primera versión. [schema.sql](../schema.sql) define sus tablas, nombres de columnas, tipos, longitudes y restricciones. Las entidades JPA ya reflejan el esquema; los futuros servicios y formularios deberán respetar ambos archivos. Los módulos de gestión aún no están implementados.
 
 ## Campos por entidad
 
@@ -26,7 +26,7 @@ Los valores predeterminados no sustituyen un `NULL` explícito. `tipo_documento`
 
 ## Estados y valores permitidos
 
-Estos valores se almacenarán como texto. Los estados y tipos deberán coincidir exactamente entre SQL y las futuras enumeraciones Java; sexo y grupo sanguíneo conservan los valores cerrados del esquema.
+Estos valores se almacenan como texto. Los estados y tipos coinciden exactamente entre SQL y las enumeraciones Java; sexo y grupo sanguíneo conservan los valores cerrados del esquema.
 
 | Campo | Valores permitidos | Valor inicial |
 | --- | --- | --- |
@@ -45,8 +45,8 @@ Las transiciones permitidas entre estados y las reglas de disponibilidad se defi
 
 - `paciente.fecha_nacimiento`, `historia_clinica.fecha_apertura` y `orden.fecha_orden` son `DATE`: representan fechas de calendario, sin hora.
 - La fecha de apertura y la fecha de orden se completan con `CURRENT_DATE` cuando se omiten. La fecha de nacimiento debe suministrarse.
-- `cita.fecha_hora` es `TIMESTAMPTZ`: representa un instante de la cita. Las futuras entradas deberán incluir zona o desplazamiento para evitar interpretaciones ambiguas; PostgreSQL no conserva el nombre de la zona original.
-- Se utilizará `America/Bogota` como zona de referencia de la aplicación. La conexión y la presentación de fechas deberán configurarse con esa referencia en las etapas técnicas correspondientes. `CURRENT_DATE` depende de la zona de la sesión de base de datos.
+- `cita.fecha_hora` es `TIMESTAMPTZ`: representa un instante de la cita. En Java se representa mediante `OffsetDateTime`, con almacenamiento nativo. Las futuras entradas deberán incluir zona o desplazamiento para evitar interpretaciones ambiguas; PostgreSQL no conserva el nombre de la zona original.
+- Se utilizará `America/Bogota` como zona de referencia de la aplicación. El pool configura esa zona en las sesiones PostgreSQL y los valores automáticos de fecha del modelo JPA la usan. La presentación de fechas deberá respetarla al implementar las vistas. `CURRENT_DATE` depende de la zona de la sesión de base de datos.
 
 ## Relaciones
 

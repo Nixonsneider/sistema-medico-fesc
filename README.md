@@ -4,9 +4,9 @@ Proyecto de una plataforma web para gestionar pacientes, médicos, especialidade
 
 ## Estado actual
 
-El repositorio contiene la estructura inicial de una aplicación Java web con Maven y Jakarta EE, un endpoint REST de prueba, un esquema SQL y la documentación de los módulos previstos.
+El repositorio contiene una aplicación Java web con Maven y Jakarta, una interfaz base con navegación, endpoints técnicos, el modelo JPA y el esquema SQL de los módulos previstos.
 
-Los módulos de gestión médica todavía no están implementados en Java. No hay entidades de persistencia, servicios, repositorios ni operaciones CRUD. La persistencia usa Hibernate y un pool HikariCP, con conexión PostgreSQL configurada en un archivo externo.
+El modelo de persistencia incluye las nueve entidades JPA y cuatro enumeraciones. La navegación y los componentes visuales comunes están preparados; los módulos de gestión médica todavía no tienen servicios, repositorios ni operaciones CRUD. La persistencia usa Hibernate y un pool HikariCP, con conexión PostgreSQL configurada en un archivo externo.
 
 ## Tecnologías y configuración
 
@@ -14,8 +14,8 @@ Los módulos de gestión médica todavía no están implementados en Java. No ha
 | --- | --- |
 | Java | Compilación con nivel de lenguaje y bytecode Java 17 |
 | Maven | Gestión de dependencias y construcción del proyecto |
-| Jakarta EE API | `11.0.0`, con alcance `provided` |
-| Jakarta REST | Jersey 4.0.3 |
+| Jakarta Servlet API | `6.1.0`, con alcance `provided` (implementada por Tomcat) |
+| Jakarta REST | Jersey 4.0.3 y proveedor JSON Jackson |
 | Conexiones | HikariCP 7.0.2 y PostgreSQL JDBC 42.7.14 |
 | Jakarta Persistence | Hibernate ORM 7.4.13.Final; transacciones `RESOURCE_LOCAL` |
 | CDI | Weld Servlet 6.0.3.Final |
@@ -23,7 +23,7 @@ Los módulos de gestión médica todavía no están implementados en Java. No ha
 | Base de datos | Esquema SQL con sintaxis de PostgreSQL |
 | IDE | Configuración compartida de Apache NetBeans |
 
-El servidor de referencia es Tomcat 11 con JDK 17 o superior (verificado con JDK 21). El WAR incluye Jersey, Weld, Hibernate, HikariCP y el controlador PostgreSQL. La API Jakarta EE sigue siendo `provided`; Tomcat no ofrece la plataforma completa. Las transacciones JPA serán locales y gestionadas explícitamente por la aplicación.
+El servidor de referencia es Tomcat 11 con JDK 17 o superior (verificado con JDK 21). El WAR incluye Jersey, Weld, Hibernate, HikariCP y el controlador PostgreSQL. La API Servlet es `provided`; las APIs REST, Persistence y CDI llegan con sus implementaciones. Tomcat no ofrece la plataforma Jakarta EE completa. Las transacciones JPA serán locales y gestionadas explícitamente por la aplicación.
 
 ## Estructura del proyecto
 
@@ -40,8 +40,9 @@ sistemaWebMedico/
 │   ├── java/com/nxn/sistemawebmedico/
 │   │   ├── JakartaRestConfiguration.java
 │   │   ├── config/                  # Configuración y ciclo de vida de persistencia
-│   │   ├── entity/                  # Entidades JPA (pendientes de etapa 4)
-│   │   ├── enums/                   # Estados y tipos (pendientes de etapa 4)
+│   │   ├── entity/                  # Nueve entidades JPA
+│   │   ├── enums/                   # Cuatro enumeraciones de estados y tipos
+│   │   ├── error/                   # Contrato JSON y traducción de errores
 │   │   ├── repository/              # Consultas y acceso a datos
 │   │   ├── service/                 # Reglas de negocio y transacciones
 │   │   └── resources/
@@ -50,7 +51,10 @@ sistemaWebMedico/
 │   ├── resources/META-INF/
 │   │   └── persistence.xml           # Unidad JPA con proveedor Hibernate
 │   └── webapp/
-│       ├── index.html                # Página de entrada
+│       ├── index.html                # Inicio, búsqueda y navegación por módulos
+│       ├── assets/
+│       │   ├── css/app.css            # Estilos compartidos y diseño adaptable
+│       │   └── js/                   # Navegación, cliente REST y utilidades de formularios
 │       ├── META-INF/context.xml      # Contexto /sistemaWebMedico
 │       └── WEB-INF/
 │           ├── beans.xml             # Configuración de CDI
@@ -70,7 +74,40 @@ Se mantiene una sola aplicación Maven con un único `pom.xml` y un WAR. Los paq
 
 El flujo previsto para los módulos es `resources → service → repository`, utilizando las entidades de `entity` y los tipos de `enums`. Los servicios delimitarán las transacciones locales; los repositorios realizarán las consultas con `EntityManager`. `config` mantiene el ciclo de vida de la fábrica JPA y del pool. `JakartaRestConfiguration` conserva la configuración REST en el paquete raíz y la ruta `/resources`.
 
-Los paquetes de dominio y acceso a datos quedan preparados para las siguientes etapas mediante su documentación, sin clases de negocio vacías. Los endpoints técnicos existentes conservan su comportamiento. Las vistas permanecen en `src/main/webapp`, con HTML, CSS y JavaScript; no se incorpora otro proyecto frontend ni nuevas dependencias en esta etapa.
+El modelo JPA está implementado; los paquetes de acceso a datos y servicios quedan preparados para las siguientes etapas mediante su documentación, sin clases de negocio vacías. El paquete `error` define el contrato público de errores y su traducción HTTP. Los endpoints técnicos existentes conservan su comportamiento. Las vistas permanecen en `src/main/webapp`, con HTML, CSS y JavaScript; no se incorpora otro proyecto frontend ni nuevas dependencias en esta etapa.
+
+## Interfaz y errores comunes
+
+La página inicial ofrece navegación lateral, un listado de módulos con búsqueda por nombre o descripción y vistas que indican su disponibilidad. La búsqueda admite texto sin tildes. Las secciones médicas están en preparación; no presentan registros ficticios ni simulan operaciones CRUD. Reportes permanece pendiente.
+
+`assets/css/app.css` contiene estilos comunes para tablas, formularios, botones, avisos, indicadores, estados vacíos y diálogos. En móvil el menú es desplegable y las tablas tienen desplazamiento dentro de su contenedor. La interfaz incluye enlace para saltar al contenido, foco visible, etiquetas y estado del módulo activo.
+
+Los futuros formularios reutilizarán `assets/js/ui.js`: `validateForm` para campos obligatorios y restricciones nativas, `showFieldErrors` para mensajes del servidor, `setFeedback` para avisos, `setBusy` para bloquear envíos repetidos y `confirmAction` para confirmar operaciones destructivas. Cada campo debe tener etiqueta visible, un `name` coincidente con su mensaje de error y una indicación de obligatoriedad. Las utilidades conservan las ayudas de `aria-describedby`, asocian los errores al campo y enfocan el primer campo inválido. El servidor seguirá validando los datos independientemente del navegador.
+
+`assets/js/api.js` exporta `request`, que resuelve las rutas REST con respecto al contexto del WAR, envía y recibe JSON y lanza `ApiRequestError` con `status`, `code`, `message` y `fields`. Los mensajes deben presentarse con `textContent` o las utilidades compartidas. Los endpoints técnicos de prueba y conexión conservan sus respuestas en texto.
+
+Los errores REST comunes usan este formato:
+
+```json
+{
+  "status": 400,
+  "code": "INVALID_DATA",
+  "message": "Revisa los campos indicados.",
+  "fields": { "nombre": "Completa este campo." }
+}
+```
+
+| Situación | HTTP | Código |
+| --- | --- | --- |
+| Datos inválidos o JSON malformado | 400 | `INVALID_DATA` |
+| Registro o recurso inexistente | 404 | `NOT_FOUND` |
+| Valor único duplicado | 409 | `DUPLICATE` |
+| Referencia inválida o registro con información relacionada | 409 | `RELATED_RECORDS` |
+| Modificación simultánea | 409 | `CONFLICT` |
+| Conexión temporalmente no disponible | 503 | `SERVICE_UNAVAILABLE` |
+| Error inesperado | 500 | `INTERNAL_ERROR` |
+
+Los servicios podrán usar `ApplicationException` para errores funcionales; los mensajes por campo deben ser comprensibles y no incluir datos clínicos ni valores privados. `ApiExceptionMapper` también reconoce restricciones PostgreSQL en excepciones anidadas. Las respuestas no incluyen SQL, trazas ni mensajes internos del controlador, y conservan las cabeceras HTTP necesarias, como `Allow` en un error 405. Este contrato cubre la API bajo `/resources`; los errores de arranque y las páginas estáticas de Tomcat se gestionan fuera de Jersey.
 
 ## Módulos previstos
 
@@ -113,6 +150,16 @@ El esquema incluye claves primarias autogeneradas, claves foráneas, campos úni
 
 Las citas se crean por defecto como `PROGRAMADA`. Los campos obligatorios y opcionales, fechas, valores predeterminados y reglas de eliminación están unificados en [Requisitos y modelo de datos](docs/EstructuraProyecto.md). Las transiciones entre estados y las reglas de disponibilidad se definirán al implementar citas.
 
+### Modelo JPA implementado
+
+Las nueve entidades se registran explícitamente en `persistence.xml`. Sus claves `Integer` se generan con `IDENTITY` y no tienen setters públicos. Se respetan las columnas, longitudes, campos opcionales y restricciones únicas del esquema.
+
+Las relaciones son unidireccionales desde el registro que contiene la clave foránea: siete `ManyToOne` y una `OneToOne` entre historia clínica y paciente. Usan carga `LAZY`, sin `CascadeType.REMOVE`, `CascadeType.ALL` ni eliminación de huérfanos. Las consultas inversas se implementarán en los repositorios.
+
+`EstadoCita`, `EstadoOrden`, `TipoOrden` y `TipoDiagnostico` usan `EnumType.STRING`, con columnas `VARCHAR`. Sexo y grupo sanguíneo conservan sus textos del esquema. Las citas usan `OffsetDateTime` y almacenamiento nativo `TIMESTAMPTZ`, preservando el instante aunque PostgreSQL normalice el desplazamiento. Las fechas sin hora usan `LocalDate`. Al persistir una historia u orden sin fecha, `@PrePersist` la completa con la fecha de `America/Bogota`; las fechas suministradas se conservan.
+
+Hibernate mantiene desactivada la creación y modificación automática de tablas. Las validaciones funcionales y el guardado de una orden con sus detalles en una transacción corresponden a las etapas de servicios.
+
 ## Preparación y ejecución
 
 ### Requisitos
@@ -130,7 +177,7 @@ Desde la raíz del proyecto:
 mvn clean package
 ```
 
-El artefacto esperado es `target/sistemaWebMedico-1.0-SNAPSHOT.war`. El repositorio no incluye Maven Wrapper ni pruebas automatizadas.
+El artefacto esperado es `target/sistemaWebMedico-1.0-SNAPSHOT.war`. El repositorio no incluye Maven Wrapper. `mvn test` comprueba el arranque del modelo sin conexión; las pruebas de integración PostgreSQL requieren una base de pruebas separada, según [Configuración local](docs/ConfiguracionLocal.md).
 
 ### Preparar la base de datos
 

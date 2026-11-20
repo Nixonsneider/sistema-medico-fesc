@@ -1,6 +1,6 @@
 # Plan de desarrollo
 
-Estado: etapas 1, 2 y 3 completadas. El usuario confirmó la conexión a su base mediante la respuesta `database OK` al ejecutar el proyecto desde NetBeans. Las etapas 4 a 11 siguen pendientes.
+Estado: etapas 1 a 5 completadas. El usuario confirmó la conexión a su base mediante la respuesta `database OK` al ejecutar el proyecto desde NetBeans. Las etapas 6 a 11 siguen pendientes.
 
 El plan se basa en los requisitos de `docs/EstructuraProyecto.md`, el esquema `schema.sql` y la configuración actual del proyecto. Se avanzará módulo por módulo, dejando cada uno funcional y verificable antes de continuar.
 
@@ -50,22 +50,32 @@ El plan se basa en los requisitos de `docs/EstructuraProyecto.md`, el esquema `s
 
 ## 4. Crear el modelo de persistencia
 
-- [ ] Mapear las nueve tablas a entidades Java, respetando nombres de columnas, claves únicas y relaciones.
-- [ ] Usar enumeraciones almacenadas como texto.
-- [ ] Definir el tratamiento de fecha y hora de las citas.
-- [ ] Evitar eliminaciones en cascada que borren información clínica relacionada.
+- [x] Mapear las nueve tablas a entidades Java, respetando nombres de columnas, claves únicas y relaciones.
+- [x] Usar enumeraciones almacenadas como texto: `EstadoCita`, `EstadoOrden`, `TipoOrden` y `TipoDiagnostico`.
+- [x] Definir el tratamiento de fecha y hora de las citas: `OffsetDateTime` con almacenamiento nativo `TIMESTAMPTZ`; fechas sin hora con `LocalDate` y valores automáticos en `America/Bogota`.
+- [x] Evitar eliminaciones en cascada que borren información clínica relacionada.
 
 **Resultado esperado:** modelo Java alineado con `schema.sql`.
 
+**Resultado de la etapa:** nueve entidades registradas explícitamente en `persistence.xml`, con identificadores `Integer` autogenerados y relaciones unidireccionales desde las claves foráneas (siete `ManyToOne` y una `OneToOne`). Sin borrado en cascada ni eliminación de huérfanos. Las fechas de apertura y orden se completan en `@PrePersist` si no fueron suministradas. La generación automática de tablas sigue desactivada.
+
+**Verificación:** cuatro pruebas aprobadas, incluyendo el arranque del modelo sin conexión y tres pruebas sobre PostgreSQL 18 temporal: persistencia y lectura de las nueve entidades, fechas y enumeraciones, rechazo de una segunda historia clínica y protección de una cita con datos relacionados. Hibernate validó el esquema de pruebas. El WAR se desplegó además en Tomcat 11 temporal: ambos endpoints técnicos respondieron HTTP 200. No se modificó la base del usuario. Se añadió JUnit con alcance `test` y se sustituyó la dependencia de toda la plataforma Jakarta por la API Servlet requerida por Tomcat; las otras APIs llegan con sus implementaciones.
+
 ## 5. Preparar la interfaz y el manejo común de errores
 
-- [ ] Leer y aplicar las [directrices de diseño médico](.agents/skills/medical-ui-design/SKILL.md) antes de trabajar en interfaces.
-- [ ] Revisar las vistas y estilos existentes.
-- [ ] Crear la navegación y los estilos compartidos de formularios, tablas, botones y estados.
-- [ ] Incorporar etiquetas visibles, validaciones comprensibles, navegación por teclado y adaptación a distintas resoluciones.
-- [ ] Unificar las respuestas para datos inválidos, duplicados, registros inexistentes y relaciones que impiden eliminar.
+- [x] Leer y aplicar las [directrices de diseño médico](.agents/skills/medical-ui-design/SKILL.md) antes de trabajar en interfaces.
+- [x] Revisar las vistas y estilos existentes.
+- [x] Crear la navegación y los estilos compartidos de formularios, tablas, botones y estados.
+- [x] Incorporar etiquetas visibles, validaciones comprensibles, navegación por teclado y adaptación a distintas resoluciones.
+- [x] Unificar las respuestas para datos inválidos, duplicados, registros inexistentes y relaciones que impiden eliminar.
 
 **Resultado esperado:** una base visual y de interacción consistente.
+
+**Resultado de la etapa:** se sustituyó la página inicial por una base clínica sobria y adaptable, con navegación por módulos, búsqueda sin tildes y estados pendientes explícitos. Se añadieron estilos compartidos y utilidades para formularios, mensajes de error por campo, estados de carga y confirmación de operaciones destructivas. No se implementaron CRUD ni reportes.
+
+**Errores comunes:** contrato JSON `status`, `code`, `message` y `fields`; excepciones funcionales para futuros servicios y traducción de restricciones SQL, recursos inexistentes y fallos inesperados. Proveedor JSON Jackson de Jersey para serializar el contrato. Los endpoints técnicos existentes mantienen sus respuestas en texto.
+
+**Verificación:** compilación y WAR correctos, 15 pruebas aprobadas (14 de errores y una del modelo), con tres pruebas PostgreSQL opcionales omitidas en esta ejecución. Se verificaron en navegador las vistas de escritorio y móvil, búsqueda, navegación, menú con teclado, formularios y confirmaciones mediante una página temporal fuera del WAR. En Tomcat temporal se comprobaron la página inicial, ambos endpoints técnicos (200), recurso inexistente (404 JSON) y método no permitido (405 JSON con cabecera `Allow`). Sin cambios en la base del usuario.
 
 ## 6. Implementar especialidades y médicos
 

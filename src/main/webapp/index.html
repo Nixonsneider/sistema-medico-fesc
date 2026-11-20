@@ -1,10 +1,72 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>Start Page</title>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    </head>
-    <body>
-        <h1>Hello World!</h1>
-    </body>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>Inicio | Sistema Médico</title>
+    <link rel="stylesheet" href="assets/css/app.css">
+    <script type="module" src="assets/js/app.js"></script>
+</head>
+<body>
+    <a class="skip-link" href="#contenido">Saltar al contenido</a>
+    <div class="app-layout">
+        <aside class="sidebar" id="navegacion">
+            <a class="brand" href="#inicio"><span class="brand-mark" aria-hidden="true">+</span><span>Sistema Médico<small>Gestión clínica</small></span></a>
+            <nav aria-label="Navegación principal">
+                <a class="nav-link" href="#inicio" aria-current="page">Inicio</a>
+                <p class="nav-heading">Administración</p>
+                <a class="nav-link" href="#especialidades">Especialidades</a>
+                <a class="nav-link" href="#medicos">Médicos</a>
+                <a class="nav-link" href="#pacientes">Pacientes</a>
+                <a class="nav-link" href="#citas">Citas</a>
+                <p class="nav-heading">Atención clínica</p>
+                <a class="nav-link" href="#historias">Historias clínicas</a>
+                <a class="nav-link" href="#diagnosticos">Diagnósticos</a>
+                <a class="nav-link" href="#tratamientos">Tratamientos</a>
+                <a class="nav-link" href="#ordenes">Órdenes médicas</a>
+                <p class="nav-heading">Consultas</p>
+                <a class="nav-link" href="#reportes">Reportes</a>
+            </nav>
+            <p class="sidebar-note">Información clínica y administrativa<br>en un solo lugar.</p>
+        </aside>
+        <div class="workspace">
+            <header class="topbar">
+                <button type="button" class="button button-secondary menu-toggle" id="menu-toggle" aria-controls="navegacion" aria-expanded="false">Menú</button>
+                <span>Gestión del consultorio</span>
+                <span class="environment-label">Versión inicial</span>
+            </header>
+            <main id="contenido" tabindex="-1">
+                <section id="home-view" aria-labelledby="home-title">
+                    <div class="page-heading"><p class="eyebrow">Gestión clínica</p><h1 id="home-title">Inicio</h1><p>Consulta las áreas de trabajo del sistema.</p></div>
+                    <div class="notice notice-info"><strong>Estamos preparando los módulos.</strong><p>Las funciones de registro y consulta estarán disponibles próximamente.</p></div>
+                    <section class="panel" aria-labelledby="modules-title">
+                        <div class="panel-heading"><div><h2 id="modules-title">Módulos del sistema</h2><p>Selecciona un área para conocer su alcance.</p></div><div class="field search-field"><label for="module-search">Buscar módulo</label><input id="module-search" type="search" placeholder="Nombre o descripción" autocomplete="off" aria-controls="module-rows"></div></div>
+                        <div class="table-scroll" role="region" aria-label="Módulos del sistema" tabindex="0">
+                            <table><caption class="sr-only">Áreas de trabajo y disponibilidad</caption><thead><tr><th scope="col">Módulo</th><th scope="col">Información que gestiona</th><th scope="col">Disponibilidad</th></tr></thead><tbody id="module-rows">
+                                <tr><th scope="row"><a href="#especialidades">Especialidades</a></th><td>Catálogo de especialidades médicas.</td><td><span class="badge badge-neutral">En preparación</span></td></tr>
+                                <tr><th scope="row"><a href="#medicos">Médicos</a></th><td>Datos profesionales, contacto y especialidad.</td><td><span class="badge badge-neutral">En preparación</span></td></tr>
+                                <tr><th scope="row"><a href="#pacientes">Pacientes</a></th><td>Identificación, datos personales y contacto.</td><td><span class="badge badge-neutral">En preparación</span></td></tr>
+                                <tr><th scope="row"><a href="#citas">Citas</a></th><td>Agenda, paciente, médico y estado de atención.</td><td><span class="badge badge-neutral">En preparación</span></td></tr>
+                                <tr><th scope="row"><a href="#historias">Historias clínicas</a></th><td>Antecedentes, alergias y grupo sanguíneo.</td><td><span class="badge badge-neutral">En preparación</span></td></tr>
+                                <tr><th scope="row"><a href="#diagnosticos">Diagnósticos</a></th><td>Hallazgos de la consulta y códigos CIE-10.</td><td><span class="badge badge-neutral">En preparación</span></td></tr>
+                                <tr><th scope="row"><a href="#tratamientos">Tratamientos</a></th><td>Medicamento, dosis, frecuencia e indicaciones.</td><td><span class="badge badge-neutral">En preparación</span></td></tr>
+                                <tr><th scope="row"><a href="#ordenes">Órdenes médicas</a></th><td>Órdenes y sus detalles e indicaciones.</td><td><span class="badge badge-neutral">En preparación</span></td></tr>
+                                <tr><th scope="row"><a href="#reportes">Reportes</a></th><td>Consultas e indicadores operativos y clínicos.</td><td><span class="badge badge-neutral">Pendiente</span></td></tr>
+                            </tbody></table>
+                        </div>
+                        <p class="empty-state" id="search-empty" hidden>No hay módulos que coincidan con tu búsqueda.</p>
+                        <p class="table-summary" id="search-summary" role="status" aria-live="polite" aria-atomic="true">9 módulos</p>
+                    </section>
+                </section>
+                <section id="module-view" aria-labelledby="module-title" hidden>
+                    <div class="page-heading"><p class="eyebrow" id="module-category"></p><h1 id="module-title"></h1><p id="module-description"></p></div>
+                    <div class="panel empty-state"><span class="badge badge-neutral" id="module-state">En preparación</span><h2 id="module-notice-title">Este módulo estará disponible próximamente</h2><p id="module-notice">Todavía no es posible registrar ni consultar información en esta sección.</p><a class="button button-secondary" href="#inicio">Volver al inicio</a></div>
+                </section>
+                <noscript><div class="notice notice-error">Activa JavaScript para utilizar la navegación y la búsqueda del sistema.</div></noscript>
+            </main>
+            <footer class="app-footer">Sistema Médico <span>Gestión de la atención y del paciente</span></footer>
+        </div>
+    </div>
+</body>
 </html>
