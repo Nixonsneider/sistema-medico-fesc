@@ -78,7 +78,7 @@ class PostgresPersistenceTest {
         assertEquals(LocalDate.now(ZoneId.of("America/Bogota")), orden.getFechaOrden());
         assertEquals(EstadoCita.PROGRAMADA, cita.getEstadoCita());
         assertEquals(OffsetDateTime.parse("2027-01-15T09:30:00-05:00").toInstant(), cita.getFechaHora().toInstant());
-        assertEquals("Medicina general", cita.getMedico().getEspecialidad().getNombre());
+        assertTrue(cita.getMedico().getEspecialidad().getNombre().startsWith("Medicina general "));
         assertEquals(LocalDate.of(1995, 4, 10), cita.getPaciente().getFechaNacimiento());
         assertEquals(pacienteId, cita.getPaciente().getIdPaciente());
 
@@ -125,7 +125,7 @@ class PostgresPersistenceTest {
     private DetalleOrden registrarRecorrido() {
         String codigo = UUID.randomUUID().toString().substring(0, 12);
         Especialidad especialidad = new Especialidad();
-        especialidad.setNombre("Medicina general");
+        especialidad.setNombre("Medicina general " + codigo);
         manager.persist(especialidad);
 
         Medico medico = new Medico();

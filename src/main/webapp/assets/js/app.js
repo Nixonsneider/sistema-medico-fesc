@@ -1,3 +1,6 @@
+import { openClinical, closeClinical } from './clinical.js';
+import { openDirectory, closeDirectory } from './directory.js';
+
 const modules = {
     especialidades: ['Especialidades', 'Administración', 'Catálogo de especialidades que se asignan a los médicos.'],
     medicos: ['Médicos', 'Administración', 'Información profesional, registro médico, contacto y especialidad.'],
@@ -18,11 +21,20 @@ function closeMenu() {
     menu.setAttribute('aria-expanded', 'false');
 }
 function route(focus = false) {
-    const key = location.hash.slice(1) || 'inicio';
+    const [routeKey, routeQuery = ''] = location.hash.slice(1).split('?');
+    const key = routeKey || 'inicio';
     if (key === 'contenido') return;
     const home = key === 'inicio';
+    const directory = key === 'especialidades' || key === 'medicos';
+    const clinical = ['pacientes', 'historias', 'citas'].includes(key);
     document.querySelector('#home-view').hidden = !home;
-    document.querySelector('#module-view').hidden = home;
+    document.querySelector('#module-view').hidden = home || directory || clinical;
+    document.querySelector('#clinical-view').hidden = !clinical;
+    if (clinical) openClinical(key, new URLSearchParams(routeQuery));
+    else closeClinical();
+    document.querySelector('#directory-view').hidden = !directory;
+    if (directory) openDirectory(key);
+    else closeDirectory();
     const module = modules[key];
     if (!home) {
         document.querySelector('#module-title').textContent = module?.[0] || 'Página no encontrada';

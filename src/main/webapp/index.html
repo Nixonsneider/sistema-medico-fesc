@@ -39,16 +39,16 @@
             <main id="contenido" tabindex="-1">
                 <section id="home-view" aria-labelledby="home-title">
                     <div class="page-heading"><p class="eyebrow">Gestión clínica</p><h1 id="home-title">Inicio</h1><p>Consulta las áreas de trabajo del sistema.</p></div>
-                    <div class="notice notice-info"><strong>Estamos preparando los módulos.</strong><p>Las funciones de registro y consulta estarán disponibles próximamente.</p></div>
+                    <div class="notice notice-info"><strong>Pacientes, historias clínicas y citas disponibles.</strong><p>Registra pacientes, consulta su información clínica y organiza la agenda de atención.</p></div>
                     <section class="panel" aria-labelledby="modules-title">
                         <div class="panel-heading"><div><h2 id="modules-title">Módulos del sistema</h2><p>Selecciona un área para conocer su alcance.</p></div><div class="field search-field"><label for="module-search">Buscar módulo</label><input id="module-search" type="search" placeholder="Nombre o descripción" autocomplete="off" aria-controls="module-rows"></div></div>
                         <div class="table-scroll" role="region" aria-label="Módulos del sistema" tabindex="0">
                             <table><caption class="sr-only">Áreas de trabajo y disponibilidad</caption><thead><tr><th scope="col">Módulo</th><th scope="col">Información que gestiona</th><th scope="col">Disponibilidad</th></tr></thead><tbody id="module-rows">
-                                <tr><th scope="row"><a href="#especialidades">Especialidades</a></th><td>Catálogo de especialidades médicas.</td><td><span class="badge badge-neutral">En preparación</span></td></tr>
-                                <tr><th scope="row"><a href="#medicos">Médicos</a></th><td>Datos profesionales, contacto y especialidad.</td><td><span class="badge badge-neutral">En preparación</span></td></tr>
-                                <tr><th scope="row"><a href="#pacientes">Pacientes</a></th><td>Identificación, datos personales y contacto.</td><td><span class="badge badge-neutral">En preparación</span></td></tr>
-                                <tr><th scope="row"><a href="#citas">Citas</a></th><td>Agenda, paciente, médico y estado de atención.</td><td><span class="badge badge-neutral">En preparación</span></td></tr>
-                                <tr><th scope="row"><a href="#historias">Historias clínicas</a></th><td>Antecedentes, alergias y grupo sanguíneo.</td><td><span class="badge badge-neutral">En preparación</span></td></tr>
+                                <tr><th scope="row"><a href="#especialidades">Especialidades</a></th><td>Catálogo de especialidades médicas.</td><td><span class="badge badge-success">Disponible</span></td></tr>
+                                <tr><th scope="row"><a href="#medicos">Médicos</a></th><td>Datos profesionales, contacto y especialidad.</td><td><span class="badge badge-success">Disponible</span></td></tr>
+                                <tr><th scope="row"><a href="#pacientes">Pacientes</a></th><td>Identificación, datos personales y contacto.</td><td><span class="badge badge-success">Disponible</span></td></tr>
+                                <tr><th scope="row"><a href="#citas">Citas</a></th><td>Agenda, paciente, médico y estado de atención.</td><td><span class="badge badge-success">Disponible</span></td></tr>
+                                <tr><th scope="row"><a href="#historias">Historias clínicas</a></th><td>Antecedentes, alergias y grupo sanguíneo.</td><td><span class="badge badge-success">Disponible</span></td></tr>
                                 <tr><th scope="row"><a href="#diagnosticos">Diagnósticos</a></th><td>Hallazgos de la consulta y códigos CIE-10.</td><td><span class="badge badge-neutral">En preparación</span></td></tr>
                                 <tr><th scope="row"><a href="#tratamientos">Tratamientos</a></th><td>Medicamento, dosis, frecuencia e indicaciones.</td><td><span class="badge badge-neutral">En preparación</span></td></tr>
                                 <tr><th scope="row"><a href="#ordenes">Órdenes médicas</a></th><td>Órdenes y sus detalles e indicaciones.</td><td><span class="badge badge-neutral">En preparación</span></td></tr>
@@ -59,6 +59,55 @@
                         <p class="table-summary" id="search-summary" role="status" aria-live="polite" aria-atomic="true">9 módulos</p>
                     </section>
                 </section>
+                <section id="directory-view" aria-labelledby="directory-title" hidden>
+                    <div class="directory-header"><div class="page-heading"><p class="eyebrow">Administración</p><h1 id="directory-title" tabindex="-1"></h1><p id="directory-description"></p></div><button class="button button-primary" id="directory-new" type="button"></button></div>
+                    <div id="directory-feedback" hidden></div>
+                    <button id="directory-retry" class="button button-secondary" type="button" hidden>Reintentar</button>
+                    <div class="panel" id="directory-list">
+                        <form class="directory-filters" id="directory-filters" role="search" aria-label="Filtrar registros">
+                            <div class="field filter-query"><label for="directory-search">Buscar</label><input type="search" id="directory-search" name="q" maxlength="100" autocomplete="off"></div>
+                            <div class="field"><label id="directory-filter-label" for="directory-filter"></label><select id="directory-filter" name="filter"></select></div>
+                            <button type="submit" class="button button-secondary">Buscar</button>
+                        </form>
+                        <p class="empty-state" id="directory-loading" role="status" hidden>Cargando registros…</p>
+                        <div class="table-scroll" role="region" aria-label="Listado de registros" tabindex="0"><table><caption class="sr-only" id="directory-caption"></caption><thead><tr id="directory-columns"></tr></thead><tbody id="directory-rows"></tbody></table></div>
+                        <p class="empty-state" id="directory-empty" hidden></p>
+                        <div class="pagination"><p id="directory-summary" role="status" aria-live="polite" aria-atomic="true"></p><div><button class="button button-secondary button-small" id="directory-previous" type="button">Anterior</button><button class="button button-secondary button-small" id="directory-next" type="button">Siguiente</button></div></div>
+                    </div>
+                    <div class="panel editor-panel" id="directory-editor" hidden>
+                        <h2 id="editor-title" tabindex="-1"></h2>
+                        <p class="field-hint editor-hint">Los campos indicados como obligatorios deben completarse.</p>
+                        <div id="editor-feedback" hidden></div>
+                        <div id="editor-form"></div>
+                    </div>
+                </section>
+                <section id="clinical-view" aria-labelledby="clinical-title" hidden>
+                    <div class="directory-header"><div class="page-heading"><p class="eyebrow" id="clinical-category">Administración</p><h1 id="clinical-title" tabindex="-1"></h1><p id="clinical-description"></p></div><button class="button button-primary" id="clinical-new" type="button"></button></div>
+                    <div id="clinical-feedback" hidden></div><button id="clinical-retry" class="button button-secondary" type="button" hidden>Reintentar</button>
+                    <div id="clinical-context" class="notice notice-info" hidden><p id="clinical-context-text"></p><a href="#citas">Ver todas las citas</a></div>
+                    <div id="history-picker" class="panel editor-panel" hidden><div class="field lookup" id="history-patient" data-lookup>
+<label for="history-patient-q">Buscar paciente por nombre o documento</label><div class="lookup-search"><input type="search" id="history-patient-q" maxlength="100" autocomplete="off"><button type="button" class="button button-secondary" data-lookup-search>Buscar paciente</button></div>
+<label for="history-patient-value">Paciente</label><select id="history-patient-value"  aria-describedby="history-patient-hint"><option value="">Selecciona paciente</option></select><span class="field-hint" id="history-patient-hint" role="status">Hasta 100 coincidencias. Refina la búsqueda si no encuentras el registro.</span></div></div>
+                    <div class="panel" id="clinical-list">
+                        <form id="clinical-filters" class="directory-filters" role="search" aria-label="Filtrar pacientes o citas">
+                            <div class="field filter-query"><label for="clinical-query">Buscar por nombre o documento</label><input type="search" id="clinical-query" maxlength="100" autocomplete="off"></div>
+                            <div id="appointment-filters" class="appointment-filters" hidden>
+                                <div class="field"><label for="clinical-from">Desde</label><input type="date" id="clinical-from" name="desde"></div><div class="field"><label for="clinical-to">Hasta</label><input type="date" id="clinical-to" name="hasta"></div>
+                                <div class="field"><label for="clinical-state">Estado</label><select id="clinical-state"><option value="">Todos los estados</option><option value="PROGRAMADA">Programada</option><option value="CONFIRMADA">Confirmada</option><option value="ATENDIDA">Atendida</option><option value="CANCELADA">Cancelada</option><option value="NO_ASISTIO">No asistió</option></select></div>
+                                <div class="field lookup" id="filter-doctor" data-lookup>
+<label for="filter-doctor-q">Buscar médico por nombre o documento</label><div class="lookup-search"><input type="search" id="filter-doctor-q" maxlength="100" autocomplete="off"><button type="button" class="button button-secondary" data-lookup-search>Buscar médico</button></div>
+<label for="filter-doctor-value">Médico</label><select id="filter-doctor-value"  aria-describedby="filter-doctor-hint"><option value="">Selecciona médico</option></select><span class="field-hint" id="filter-doctor-hint" role="status">Hasta 100 coincidencias. Refina la búsqueda si no encuentras el registro.</span></div>
+                            </div>
+                            <button type="submit" class="button button-secondary">Aplicar filtros</button>
+                        </form>
+                        <p id="clinical-loading" class="empty-state" role="status" hidden>Cargando registros…</p>
+                        <div class="table-scroll" role="region" aria-label="Listado de pacientes o citas" tabindex="0"><table><caption id="clinical-caption" class="sr-only"></caption><thead><tr id="clinical-columns"></tr></thead><tbody id="clinical-rows"></tbody></table></div>
+                        <p class="empty-state" id="clinical-empty" hidden></p><div class="pagination"><p id="clinical-summary" role="status" aria-live="polite"></p><div><button id="clinical-previous" type="button" class="button button-secondary button-small">Anterior</button><button id="clinical-next" type="button" class="button button-secondary button-small">Siguiente</button></div></div>
+                    </div>
+                    <div id="clinical-editor" class="panel editor-panel" hidden><h2 id="clinical-editor-title" tabindex="-1"></h2><p class="field-hint editor-hint">Completa los campos indicados como obligatorios.</p><div id="clinical-editor-feedback" hidden></div><div id="clinical-form"></div><div id="clinical-related" class="related-links" hidden></div>
+                        <section id="appointment-state-panel" class="contact-fields" aria-labelledby="state-title" hidden><h3 id="state-title">Estado de la cita</h3><p id="appointment-current-state"></p><form id="appointment-state-form" class="form-actions"><div class="field"><label for="appointment-new-state">Nuevo estado</label><select id="appointment-new-state" name="estado" required></select></div><button type="submit" class="button button-primary">Actualizar estado</button></form><p class="field-hint">La atención y la inasistencia se registran a partir de la hora de la cita. Los estados finales no pueden reabrirse.</p></section>
+                    </div>
+                </section>
                 <section id="module-view" aria-labelledby="module-title" hidden>
                     <div class="page-heading"><p class="eyebrow" id="module-category"></p><h1 id="module-title"></h1><p id="module-description"></p></div>
                     <div class="panel empty-state"><span class="badge badge-neutral" id="module-state">En preparación</span><h2 id="module-notice-title">Este módulo estará disponible próximamente</h2><p id="module-notice">Todavía no es posible registrar ni consultar información en esta sección.</p><a class="button button-secondary" href="#inicio">Volver al inicio</a></div>
@@ -68,5 +117,38 @@
             <footer class="app-footer">Sistema Médico <span>Gestión de la atención y del paciente</span></footer>
         </div>
     </div>
+    <template id="especialidad-form-template">
+        <form novalidate>
+            <fieldset><legend class="sr-only">Datos de la especialidad</legend><div class="form-grid">
+                <div class="field"><label for="e-nombre">Nombre (obligatorio)</label><input id="e-nombre" name="nombre" required maxlength="100" autocomplete="off"></div>
+                <div class="field"><label for="e-activo">Estado (obligatorio)</label><select id="e-activo" name="activo" required aria-describedby="e-activo-hint"><option value="true">Activa</option><option value="false">Inactiva</option></select><span class="field-hint" id="e-activo-hint">Las especialidades inactivas conservan sus médicos asociados.</span></div>
+                <div class="field field-full"><label for="e-descripcion">Descripción <span class="optional">(opcional)</span></label><textarea id="e-descripcion" name="descripcion" rows="3"></textarea></div>
+            </div></fieldset>
+            <div class="form-actions"><button type="submit" class="button button-primary" data-save>Guardar especialidad</button><button type="button" class="button button-secondary" data-cancel>Cancelar</button></div>
+        </form>
+    </template>
+    <template id="medico-form-template">
+        <form novalidate>
+            <fieldset><legend>Información profesional</legend><div class="form-grid">
+                <div class="field"><label for="m-documento">Documento (obligatorio)</label><input id="m-documento" name="documento" required maxlength="20" autocomplete="off"></div>
+                <div class="field"><label for="m-registro">Registro médico (obligatorio)</label><input id="m-registro" name="registroMedico" required maxlength="50" autocomplete="off"></div>
+                <div class="field"><label for="m-nombre">Nombres (obligatorio)</label><input id="m-nombre" name="nombre" required maxlength="100" autocomplete="given-name"></div>
+                <div class="field"><label for="m-apellido">Apellidos (obligatorio)</label><input id="m-apellido" name="apellido" required maxlength="100" autocomplete="family-name"></div>
+                <div class="field field-full"><label for="m-especialidad">Especialidad (obligatorio)</label><select id="m-especialidad" name="idEspecialidad" required aria-describedby="m-especialidad-hint"><option value="">Selecciona una especialidad</option></select><span class="field-hint" id="m-especialidad-hint">Elige una especialidad activa. Una asignación actual inactiva puede conservarse.</span></div>
+            </div></fieldset>
+            <fieldset class="contact-fields"><legend>Contacto</legend><div class="form-grid">
+                <div class="field"><label for="m-telefono">Teléfono (obligatorio)</label><input id="m-telefono" name="telefono" type="tel" required maxlength="20" autocomplete="tel"></div>
+                <div class="field"><label for="m-email">Correo electrónico (obligatorio)</label><input id="m-email" name="email" type="email" required maxlength="100" autocomplete="email"></div>
+            </div></fieldset>
+            <div class="form-actions"><button type="submit" class="button button-primary" data-save>Guardar médico</button><button type="button" class="button button-secondary" data-cancel>Cancelar</button></div>
+        </form>
+    </template>
+<template id="paciente-form-template"><form novalidate><fieldset><legend>Datos del paciente</legend><div class="form-grid"><div class="field"><label for="p-tipoDocumento">Tipo de documento (obligatorio)</label><input id="p-tipoDocumento" name="tipoDocumento" type="text" required maxlength="20"></div><div class="field"><label for="p-documento">Número de documento (obligatorio)</label><input id="p-documento" name="documento" type="text" required maxlength="20"></div><div class="field"><label for="p-nombre">Nombres (obligatorio)</label><input id="p-nombre" name="nombre" type="text" required maxlength="100"></div><div class="field"><label for="p-apellido">Apellidos (obligatorio)</label><input id="p-apellido" name="apellido" type="text" required maxlength="100"></div><div class="field"><label for="p-fechaNacimiento">Fecha de nacimiento (obligatorio)</label><input id="p-fechaNacimiento" name="fechaNacimiento" type="date" required></div><div class="field"><label for="p-sexo">Sexo (obligatorio)</label><select id="p-sexo" name="sexo" required><option value="">Selecciona una opción</option><option value="Masculino">Masculino</option><option value="Femenino">Femenino</option><option value="Otro">Otro</option></select></div><div class="field"><label for="p-direccion">Dirección (obligatorio)</label><input id="p-direccion" name="direccion" type="text" required maxlength="150"></div><div class="field"><label for="p-telefono">Teléfono (obligatorio)</label><input id="p-telefono" name="telefono" type="tel" required maxlength="20"></div><div class="field"><label for="p-email">Correo electrónico (obligatorio)</label><input id="p-email" name="email" type="email" required maxlength="100"></div></div></fieldset><div class="form-actions"><button type="submit" class="button button-primary" data-save>Guardar paciente</button><button type="button" class="button button-secondary" data-cancel>Cancelar</button></div></form></template>
+<template id="historia-form-template"><form novalidate><fieldset><legend>Información clínica</legend><p id="history-opening" class="field-hint"></p><div class="form-grid"><div class="field"><label for="h-grupo">Grupo sanguíneo (obligatorio)</label><select id="h-grupo" name="grupoSanguineo" required><option value="">Selecciona una opción</option><option value="A+">A+</option><option value="A-">A-</option><option value="B+">B+</option><option value="B-">B-</option><option value="AB+">AB+</option><option value="AB-">AB-</option><option value="O+">O+</option><option value="O-">O-</option></select></div><div class="field"><label for="h-antecedentes">Antecedentes <span class="optional">(opcional)</span></label><textarea id="h-antecedentes" name="antecedentes" rows="3"></textarea></div><div class="field"><label for="h-alergias">Alergias <span class="optional">(opcional)</span></label><textarea id="h-alergias" name="alergias" rows="3"></textarea></div></div></fieldset><div class="form-actions"><button type="submit" class="button button-primary" data-save>Guardar historia clínica</button><button type="button" class="button button-secondary" data-cancel>Cancelar</button></div></form></template>
+<template id="cita-form-template"><form novalidate><fieldset><legend>Programación de la cita</legend><div class="form-grid"><div class="field lookup" id="a-patient" data-lookup>
+<label for="a-patient-q">Buscar paciente por nombre o documento</label><div class="lookup-search"><input type="search" id="a-patient-q" maxlength="100" autocomplete="off"><button type="button" class="button button-secondary" data-lookup-search>Buscar paciente</button></div>
+<label for="a-patient-value">Paciente (obligatorio)</label><select id="a-patient-value" name="idPaciente" required aria-describedby="a-patient-hint"><option value="">Selecciona paciente</option></select><span class="field-hint" id="a-patient-hint" role="status">Hasta 100 coincidencias. Refina la búsqueda si no encuentras el registro.</span></div><div class="field lookup" id="a-doctor" data-lookup>
+<label for="a-doctor-q">Buscar médico por nombre o documento</label><div class="lookup-search"><input type="search" id="a-doctor-q" maxlength="100" autocomplete="off"><button type="button" class="button button-secondary" data-lookup-search>Buscar médico</button></div>
+<label for="a-doctor-value">Médico (obligatorio)</label><select id="a-doctor-value" name="idMedico" required aria-describedby="a-doctor-hint"><option value="">Selecciona médico</option></select><span class="field-hint" id="a-doctor-hint" role="status">Hasta 100 coincidencias. Refina la búsqueda si no encuentras el registro.</span></div><div class="field"><label for="a-fecha">Fecha y hora (Bogotá) (obligatorio)</label><input id="a-fecha" name="fechaHora" type="datetime-local" required></div><div class="field"><label for="a-motivo">Motivo (obligatorio)</label><textarea id="a-motivo" name="motivo" rows="3" required maxlength="10000"></textarea></div></div><p class="field-hint">No se permiten citas activas en el mismo instante para el médico o el paciente. Al reprogramar, la cita vuelve a Programada.</p></fieldset><div class="form-actions"><button type="submit" class="button button-primary" data-save>Guardar cita</button><button type="button" class="button button-secondary" data-cancel>Cancelar</button></div></form></template>
 </body>
 </html>

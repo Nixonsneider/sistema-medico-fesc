@@ -104,6 +104,41 @@ legend { margin-bottom: 14px; }
 .confirmation::backdrop { background: rgb(17 36 54 / 45%); }
 .confirmation p { margin-top: 12px; color: var(--muted); }
 .confirmation .form-actions { justify-content: flex-end; }
+.directory-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.directory-header > .button { flex-shrink: 0; }
+.directory-filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px; padding: 20px 22px; }
+.directory-filters .field { min-width: 180px; }
+.filter-query { flex: 1; }
+.pagination { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 14px 22px; color: var(--muted); font-size: 12px; }
+.pagination > div, .row-actions { display: flex; gap: 8px; }
+.button-small { min-height: 32px; padding: 5px 10px; font-size: 12px; }
+.editor-panel { max-width: 900px; padding: 24px; }
+.editor-hint { margin: 8px 0 24px; }
+.contact-fields { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
+#directory-retry { margin-bottom: 18px; }
+#directory-view .notice { margin-bottom: 18px; }
+.directory-description-cell { max-width: 420px; overflow-wrap: anywhere; }
+#directory-title:focus, #editor-title:focus { outline: none; }
+.lookup-search { display: flex; gap: 8px; }
+.lookup-search input { min-width: 0; }
+.lookup-search .button { flex-shrink: 0; }
+.appointment-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; width: 100%; }
+.appointment-filters > .field { min-width: 0; }
+.appointment-filters .lookup { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; column-gap: 16px; }
+.appointment-filters .lookup > label:first-child { grid-column: 1; grid-row: 1; }
+.appointment-filters .lookup .lookup-search { grid-column: 1; grid-row: 2; }
+.appointment-filters .lookup > label[for$="-value"] { grid-column: 2; grid-row: 1; }
+.appointment-filters .lookup > select { grid-column: 2; grid-row: 2; }
+.appointment-filters .lookup > .field-hint { grid-column: 1 / -1; }
+.related-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 20px; }
+#history-picker { margin-bottom: 20px; }
+#clinical-title:focus, #clinical-editor-title:focus { outline: none; }
+#clinical-retry { margin-bottom: 18px; }
+#clinical-view .notice { margin: 16px 0; }
+#history-opening { margin-bottom: 16px; }
+#appointment-state-panel h3 { font-size: 15px; margin: 0 0 8px; }
+#appointment-state-form { align-items: flex-end; }
+#clinical-view .row-actions { flex-wrap: wrap; }
 @media (max-width: 1000px) {
     .app-layout { grid-template-columns: 210px minmax(0, 1fr); }
     main { padding: 26px 24px; }
@@ -111,6 +146,15 @@ legend { margin-bottom: 14px; }
     th, td { padding: 13px 16px; }
 }
 @media (max-width: 700px) {
+    .appointment-filters { grid-template-columns: 1fr; }
+    .appointment-filters .lookup { display: flex; }
+    .directory-header { flex-direction: column; gap: 0; margin-bottom: 20px; }
+    .directory-header .page-heading { margin-bottom: 14px; }
+    .directory-filters { padding: 16px; }
+    .directory-filters .field { width: 100%; min-width: 0; }
+    .directory-filters > .button { width: 100%; }
+    .editor-panel { padding: 18px 16px; }
+    .pagination { padding: 14px 16px; }
     .app-layout { display: block; }
     .sidebar { display: none; position: fixed; top: 64px; bottom: 0; left: 0; width: 250px; z-index: 5; overflow-y: auto; border-right: 1px solid #34536e; }
     .sidebar.is-open { display: flex; }

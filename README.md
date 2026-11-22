@@ -6,7 +6,7 @@ Proyecto de una plataforma web para gestionar pacientes, médicos, especialidade
 
 El repositorio contiene una aplicación Java web con Maven y Jakarta, una interfaz base con navegación, endpoints técnicos, el modelo JPA y el esquema SQL de los módulos previstos.
 
-El modelo de persistencia incluye las nueve entidades JPA y cuatro enumeraciones. La navegación y los componentes visuales comunes están preparados; los módulos de gestión médica todavía no tienen servicios, repositorios ni operaciones CRUD. La persistencia usa Hibernate y un pool HikariCP, con conexión PostgreSQL configurada en un archivo externo.
+El modelo de persistencia incluye las nueve entidades JPA y cuatro enumeraciones. Especialidades, médicos y pacientes cuentan con registro, listado, consulta y edición. También están disponibles la historia clínica única de cada paciente y la agenda de citas, con filtros, reprogramación y cambios de estado. Diagnósticos, tratamientos, órdenes y reportes siguen pendientes. La persistencia usa Hibernate y un pool HikariCP, con conexión PostgreSQL configurada en un archivo externo.
 
 ## Tecnologías y configuración
 
@@ -40,12 +40,17 @@ sistemaWebMedico/
 │   ├── java/com/nxn/sistemawebmedico/
 │   │   ├── JakartaRestConfiguration.java
 │   │   ├── config/                  # Configuración y ciclo de vida de persistencia
+│   │   ├── dto/                     # Contratos de entrada/salida y páginas
 │   │   ├── entity/                  # Nueve entidades JPA
 │   │   ├── enums/                   # Cuatro enumeraciones de estados y tipos
 │   │   ├── error/                   # Contrato JSON y traducción de errores
-│   │   ├── repository/              # Consultas y acceso a datos
-│   │   ├── service/                 # Reglas de negocio y transacciones
+│   │   ├── repository/              # Consultas de catálogos, pacientes, historias y citas
+│   │   ├── service/                 # Validaciones y transacciones de los módulos
 │   │   └── resources/
+│   │       ├── EspecialidadResource.java
+│   │       ├── MedicoResource.java
+│   │       ├── PacienteResource.java
+│   │       ├── CitaResource.java
 │   │       ├── DatabaseHealthResource.java
 │   │       └── JakartaEE11Resource.java
 │   ├── resources/META-INF/
@@ -74,11 +79,11 @@ Se mantiene una sola aplicación Maven con un único `pom.xml` y un WAR. Los paq
 
 El flujo previsto para los módulos es `resources → service → repository`, utilizando las entidades de `entity` y los tipos de `enums`. Los servicios delimitarán las transacciones locales; los repositorios realizarán las consultas con `EntityManager`. `config` mantiene el ciclo de vida de la fábrica JPA y del pool. `JakartaRestConfiguration` conserva la configuración REST en el paquete raíz y la ruta `/resources`.
 
-El modelo JPA está implementado; los paquetes de acceso a datos y servicios quedan preparados para las siguientes etapas mediante su documentación, sin clases de negocio vacías. El paquete `error` define el contrato público de errores y su traducción HTTP. Los endpoints técnicos existentes conservan su comportamiento. Las vistas permanecen en `src/main/webapp`, con HTML, CSS y JavaScript; no se incorpora otro proyecto frontend ni nuevas dependencias en esta etapa.
+El modelo JPA está implementado. Los repositorios y servicios de especialidades y médicos realizan las consultas y transacciones; el paquete `dto` separa los datos de entrada y salida de las entidades persistentes. El paquete `error` define el contrato público de errores y su traducción HTTP. Los endpoints técnicos existentes conservan su comportamiento. Las vistas permanecen en `src/main/webapp`, con HTML, CSS y JavaScript; no se incorpora otro proyecto frontend ni nuevas dependencias en esta etapa.
 
 ## Interfaz y errores comunes
 
-La página inicial ofrece navegación lateral, un listado de módulos con búsqueda por nombre o descripción y vistas que indican su disponibilidad. La búsqueda admite texto sin tildes. Las secciones médicas están en preparación; no presentan registros ficticios ni simulan operaciones CRUD. Reportes permanece pendiente.
+La página inicial ofrece navegación lateral, un listado de módulos con búsqueda por nombre o descripción y vistas que indican su disponibilidad. La búsqueda del listado inicial admite texto sin tildes. Especialidades, médicos, pacientes, historias clínicas y citas están disponibles con datos de la base configurada; las demás secciones y reportes permanecen pendientes.
 
 `assets/css/app.css` contiene estilos comunes para tablas, formularios, botones, avisos, indicadores, estados vacíos y diálogos. En móvil el menú es desplegable y las tablas tienen desplazamiento dentro de su contenedor. La interfaz incluye enlace para saltar al contenido, foco visible, etiquetas y estado del módulo activo.
 
@@ -126,6 +131,51 @@ Los servicios podrán usar `ApplicationException` para errores funcionales; los 
 
 Los requisitos se encuentran en [Estructura del proyecto](docs/EstructuraProyecto.md). El alcance de reportes se describe en [Módulo de reportes](docs/ModuloReportes.md), y su implementación queda para una etapa posterior.
 
+## Especialidades y médicos
+
+Ambos módulos permiten registrar, listar, consultar y editar. Los listados muestran 20 registros por página, con búsqueda y filtros. Las especialidades se filtran por estado; los médicos se buscan por nombre completo, documento o registro médico y se filtran por especialidad.
+
+Una especialidad inactiva conserva sus médicos asociados y puede reactivarse. No se puede asignar a un médico nuevo ni en una reasignación, pero los médicos que ya la tienen pueden conservarla al editar sus demás datos. No hay eliminación física de especialidades o médicos en esta etapa.
+
+Los servicios recortan espacios en los extremos de los textos, validan los campos obligatorios, sus longitudes y el correo, y detectan los datos únicos duplicados. La unicidad conserva la comparación exacta del esquema SQL. Los DTO evitan enviar entidades JPA y relaciones diferidas directamente al navegador.
+
+Rutas relativas a `/resources`:
+
+| Método | Ruta | Operación |
+| --- | --- | --- |
+| `GET` | `/especialidades` | Listado con `q`, `activo`, `page` y `pageSize`. |
+| `POST` | `/especialidades` | Crear con `nombre`, `descripcion` y `activo`. |
+| `GET` / `PUT` | `/especialidades/{id}` | Consultar / editar. |
+| `GET` | `/medicos` | Listado con `q`, `idEspecialidad`, `page` y `pageSize`. |
+| `POST` | `/medicos` | Crear con `documento`, `nombre`, `apellido`, `registroMedico`, `telefono`, `email` e `idEspecialidad`. |
+| `GET` / `PUT` | `/medicos/{id}` | Consultar / editar. |
+
+Los listados responden con `{ "items": [], "total": 0, "page": 1, "pageSize": 20 }`. `page` comienza en 1 y `pageSize` admite valores de 1 a 100. Los registros nuevos responden con HTTP 201 y cabecera `Location`; la edición devuelve HTTP 200. El identificador de la URL selecciona el registro que se edita. Si se omite `activo`, una especialidad nueva queda activa y una existente conserva su estado.
+
+## Pacientes, historias clínicas y citas
+
+Pacientes permite registrar, buscar, consultar y editar identificación, nacimiento, sexo, dirección y contacto. La fecha de nacimiento no puede ser futura; documento y correo no pueden repetirse en otro paciente. La ficha enlaza con su historia clínica y sus citas.
+
+La historia se abre desde un paciente existente y requiere grupo sanguíneo. Antecedentes y alergias son opcionales. Se permite consultar y editar su contenido, conservando la fecha de apertura y el paciente propietario. Se impide una segunda historia incluso ante solicitudes simultáneas.
+
+La agenda permite crear, consultar y reprogramar citas activas y cambiar sus estados. Se muestran en horario de Bogotá y pueden filtrarse por paciente, médico, estado, fechas y texto. Un médico o paciente no puede tener dos citas activas en el mismo instante; no se calculan intervalos de atención porque el esquema no define duración.
+
+Las citas comienzan como `PROGRAMADA`. Se pueden confirmar, atender, cancelar o marcar como `NO_ASISTIO`; atención e inasistencia requieren que haya llegado su hora. Los estados finales no se reabren. Cambiar la hora o los participantes de una cita activa la devuelve a `PROGRAMADA`. Las reglas completas están en [Requisitos y modelo de datos](docs/EstructuraProyecto.md).
+
+Rutas adicionales relativas a `/resources`:
+
+| Método | Ruta | Operación |
+| --- | --- | --- |
+| `GET` / `POST` | `/pacientes` | Listar con `q`, `page`, `pageSize` / registrar. |
+| `GET` / `PUT` | `/pacientes/{id}` | Consultar / editar datos del paciente. |
+| `GET` | `/pacientes/opciones`, `/medicos/opciones` | Hasta 100 coincidencias mínimas por `q`, sin contacto ni datos clínicos. |
+| `GET` / `POST` / `PUT` | `/pacientes/{id}/historia` | Consultar / abrir / editar su historia. GET devuelve 204 si aún no se abrió. |
+| `GET` / `POST` | `/citas` | Listar / programar con `idPaciente`, `idMedico`, `fechaHora` y `motivo`. |
+| `GET` / `PUT` | `/citas/{id}` | Consultar / reprogramar o editar una cita activa. |
+| `PATCH` | `/citas/{id}/estado` | Actualizar con `{ "estado": "CONFIRMADA" }`. |
+
+La búsqueda de citas admite `q`, `idPaciente`, `idMedico`, `estado`, `desde`, `hasta`, `page` y `pageSize`. Las fechas de filtro usan `AAAA-MM-DD`; la fecha de nacimiento también. Las horas de citas incluyen desplazamiento: `2026-11-23T10:00:00-05:00`. Las fechas se transmiten como cadenas ISO, sin depender de la zona del equipo cliente. Los selectores muestran como máximo 100 referencias y permiten refinar la búsqueda. La lista de pacientes omite dirección y contacto; la agenda omite los motivos clínicos. Los datos completos se consultan en cada ficha o cita individual.
+
 ## Modelo de datos
 
 El archivo [schema.sql](schema.sql) define las tablas y sus restricciones. Las relaciones son:
@@ -148,7 +198,7 @@ El esquema incluye claves primarias autogeneradas, claves foráneas, campos úni
 | Estado de orden | `PENDIENTE`, `COMPLETADA`, `CANCELADA` |
 | Tipo de diagnóstico | `PRESUNTIVO`, `DEFINITIVO`, `PRINCIPAL`, `SECUNDARIO` |
 
-Las citas se crean por defecto como `PROGRAMADA`. Los campos obligatorios y opcionales, fechas, valores predeterminados y reglas de eliminación están unificados en [Requisitos y modelo de datos](docs/EstructuraProyecto.md). Las transiciones entre estados y las reglas de disponibilidad se definirán al implementar citas.
+Las citas se crean por defecto como `PROGRAMADA`. Los campos obligatorios y opcionales, fechas, valores predeterminados y reglas de eliminación están unificados en [Requisitos y modelo de datos](docs/EstructuraProyecto.md). Las transiciones entre estados y la disponibilidad se validan en el servicio de citas según las [reglas de agenda](docs/EstructuraProyecto.md#reglas-de-agenda).
 
 ### Modelo JPA implementado
 

@@ -20,11 +20,19 @@ public final class ApplicationException extends RuntimeException {
     }
 
     public static ApplicationException duplicate() {
-        return new ApplicationException(409, "DUPLICATE", "Ya existe un registro con esos datos únicos.", Map.of());
+        return duplicate(Map.of());
+    }
+
+    public static ApplicationException duplicate(Map<String, String> fields) {
+        return new ApplicationException(409, "DUPLICATE", "Ya existe un registro con esos datos únicos.", fields);
     }
 
     public static ApplicationException relatedRecords() {
         return new ApplicationException(409, "RELATED_RECORDS", "No se puede eliminar el registro porque tiene información relacionada.", Map.of());
+    }
+
+    public static ApplicationException conflict(String message, Map<String, String> fields) {
+        return new ApplicationException(409, "CONFLICT", message, fields);
     }
 
     public ApiError getError() {

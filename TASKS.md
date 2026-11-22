@@ -1,6 +1,6 @@
 # Plan de desarrollo
 
-Estado: etapas 1 a 5 completadas. El usuario confirmó la conexión a su base mediante la respuesta `database OK` al ejecutar el proyecto desde NetBeans. Las etapas 6 a 11 siguen pendientes.
+Estado: etapas 1 a 8 completadas. El usuario confirmó la conexión a su base mediante la respuesta `database OK` al ejecutar el proyecto desde NetBeans. Las etapas 9 a 11 siguen pendientes.
 
 El plan se basa en los requisitos de `docs/EstructuraProyecto.md`, el esquema `schema.sql` y la configuración actual del proyecto. Se avanzará módulo por módulo, dejando cada uno funcional y verificable antes de continuar.
 
@@ -79,30 +79,48 @@ El plan se basa en los requisitos de `docs/EstructuraProyecto.md`, el esquema `s
 
 ## 6. Implementar especialidades y médicos
 
-- [ ] Implementar primero especialidades, porque los médicos dependen de ellas.
-- [ ] Definir el uso del campo `activo` de especialidades.
-- [ ] Desarrollar registro, listado, consulta y edición de médicos, seleccionando una especialidad existente.
-- [ ] Validar documento, registro médico y correo únicos.
+- [x] Implementar primero especialidades, porque los médicos dependen de ellas.
+- [x] Definir el uso del campo `activo` de especialidades.
+- [x] Desarrollar registro, listado, consulta y edición de médicos, seleccionando una especialidad existente.
+- [x] Validar documento, registro médico y correo únicos.
 
 **Resultado esperado:** médicos disponibles para asignarlos a las citas.
 
+**Resultado de la etapa:** especialidades con registro, listado, consulta, edición y activación/desactivación; médicos con registro, listado, consulta y edición, asociados a una especialidad existente. Se implementaron repositorios, servicios con transacciones locales, DTO de entrada/salida y endpoints REST. Las vistas incluyen filtros, búsqueda, paginación de 20 registros, validaciones por campo y estados de carga, error y ausencia de datos.
+
+**Regla de especialidades inactivas:** no admiten nuevos médicos ni reasignaciones. Los médicos ya asociados mantienen la relación y pueden editar sus demás datos conservando esa especialidad. La interfaz pide confirmar la desactivación. No se añadió eliminación física de especialidades ni médicos.
+
+**Validación:** campos obligatorios y longitudes del esquema, correo válido y especialidad existente. Se comprueban documento, registro médico y correo únicos antes de guardar, excluyendo el propio registro en la edición. La base mantiene sus restricciones como protección ante concurrencia. Las respuestas usan el contrato de errores de la etapa 5 y no serializan directamente las entidades JPA.
+
+**Verificación:** 23 pruebas aprobadas, sin omisiones, y WAR generado. Cinco pruebas de servicios comprueban alta/edición, duplicados, persistencia tras fallos, inactivación, reasignación, filtros, paginación y referencias inválidas. En Tomcat temporal se probó desde el navegador el registro de especialidad y médico, consulta, edición, duplicados con errores por campo, desactivación confirmada, conservación de la asignación inactiva, bloqueo de altas sin especialidades activas y búsqueda sin coincidencias. Revisión visual en escritorio y móvil con datos ficticios. No se modificó la base del usuario ni se hizo commit.
+
 ## 7. Implementar pacientes e historias clínicas
 
-- [ ] Desarrollar registro, consulta, edición y búsqueda de pacientes.
-- [ ] Incorporar la creación y consulta de su historia clínica con grupo sanguíneo, antecedentes y alergias.
-- [ ] Impedir más de una historia clínica por paciente.
-- [ ] Permitir acceder a la información relacionada desde la consulta del paciente.
+- [x] Desarrollar registro, consulta, edición y búsqueda de pacientes.
+- [x] Incorporar la creación y consulta de su historia clínica con grupo sanguíneo, antecedentes y alergias.
+- [x] Impedir más de una historia clínica por paciente.
+- [x] Permitir acceder a la información relacionada desde la consulta del paciente.
 
 **Resultado esperado:** pacientes registrados con su historia clínica asociada.
 
+**Resultado de la etapa 7:** repositorio, servicios, DTO y API para registrar, consultar, editar y buscar pacientes con paginación. Se validan nacimiento no futuro, sexo, campos obligatorios, longitudes y documento/correo únicos. La ficha enlaza con su historia y sus citas. La historia se puede abrir una sola vez y editar conservando paciente y fecha; la apertura bloquea al paciente y mantiene la restricción única del SQL. La consulta devuelve 204 si el paciente existe pero aún no tiene historia.
+
+**Interfaz:** formularios accesibles con datos personales y contacto, y consulta/edición de grupo sanguíneo, antecedentes y alergias. Los listados de pacientes omiten contacto y dirección; estos se consultan en la ficha individual. Los selectores de referencia tienen búsqueda y devuelven únicamente identificador, nombre y documento, hasta 100 coincidencias.
+
 ## 8. Implementar citas
 
-- [ ] Concretar las reglas de disponibilidad y los cambios de estado permitidos antes de programarlos; la documentación todavía no los define.
-- [ ] Permitir seleccionar paciente y médico existentes y registrar fecha, hora y motivo.
-- [ ] Incorporar consulta de citas y actualización de su estado.
-- [ ] Añadir los filtros básicos necesarios.
+- [x] Definir e implementar disponibilidad por instante, transiciones y estados finales según docs/EstructuraProyecto.md.
+- [x] Permitir seleccionar paciente y médico existentes y registrar fecha, hora y motivo.
+- [x] Incorporar consulta de citas y actualización de su estado.
+- [x] Añadir los filtros básicos necesarios.
 
 **Resultado esperado:** gestión de citas con relaciones y estados consistentes.
+
+**Resultado de la etapa 8:** agenda paginada con búsqueda y filtros por paciente, médico, estado y fechas de Bogotá; creación, consulta, reprogramación y cambio de estado. Las horas se reciben con desplazamiento ISO 8601 y se muestran en Bogotá independientemente de la zona del navegador. La lista no expone los motivos clínicos; se consultan en el detalle.
+
+**Reglas:** citas nuevas futuras, con precisión de minutos y estado PROGRAMADA. No puede haber dos citas activas del mismo médico o paciente en el mismo instante; se bloquean ambos recursos durante la transacción para evitar reservas simultáneas. El esquema no tiene duración y no se infieren intervalos ni turnos laborales. La reprogramación de hora o participantes devuelve una cita activa a PROGRAMADA. Atención e inasistencia requieren que haya llegado su hora. ATENDIDA, CANCELADA y NO_ASISTIO son finales; la cancelación pide confirmación en la interfaz.
+
+**Verificación conjunta:** 30 pruebas aprobadas, incluyendo siete nuevas pruebas de pacientes, historias, filtros de fechas, transiciones, cruces y reservas simultáneas. Flujos en Tomcat temporal con datos ficticios: paciente → historia → citas, creación y consulta, confirmación, rechazo de atención anticipada, cancelación final, reutilización del horario liberado y reprogramación. Revisión visual de escritorio y móvil. Sin cambios en la base del usuario y sin commit.
 
 ## 9. Implementar diagnósticos y tratamientos
 

@@ -73,3 +73,16 @@ Ejemplo desde PowerShell, para una instancia de pruebas ya iniciada en el puerto
 ```
 
 Las pruebas validan el esquema existente con Hibernate y comprueban el recorrido por las nueve entidades, los estados almacenados como texto, las fechas, la restricción de una historia por paciente y la protección frente al borrado de una cita con información clínica asociada. No crean ni migran tablas.
+
+
+## Verificar pacientes, historias y citas
+
+Tras reconstruir y ejecutar el proyecto en NetBeans:
+
+1. En Pacientes, registrar un paciente y abrir su ficha.
+2. Usar Historia clínica para abrir su única historia o consultar la existente. La fecha se asigna al guardar.
+3. Desde la ficha, usar Citas del paciente y Programar cita. Buscar y seleccionar un médico, fecha/hora futura de Bogotá y motivo.
+4. Consultar la cita para confirmar, cancelar o registrar atención/inasistencia. Las dos últimas acciones requieren que haya llegado la hora de atención. Las citas finalizadas no se reabren.
+5. Para reprogramar una cita activa, volver al listado y usar Reprogramar. Un cambio de hora o participantes devuelve el estado a Programada.
+
+Los filtros de fecha incluyen días completos en Bogotá. No se calcula duración ni se bloquean intervalos entre horas distintas. Las pruebas de ClinicalServiceTest se ejecutan con la misma propiedad medico.test.jdbcUrl de la base independiente de pruebas e incluyen dos reservas simultáneas del mismo médico.

@@ -2,7 +2,7 @@
 
 La plataforma permitirá gestionar especialidades, médicos, pacientes, citas, historias clínicas, diagnósticos, tratamientos y órdenes médicas con sus detalles.
 
-Este documento define las reglas funcionales de la primera versión. [schema.sql](../schema.sql) define sus tablas, nombres de columnas, tipos, longitudes y restricciones. Las entidades JPA ya reflejan el esquema; los futuros servicios y formularios deberán respetar ambos archivos. Los módulos de gestión aún no están implementados.
+Este documento define las reglas funcionales de la primera versión. [schema.sql](../schema.sql) define sus tablas, nombres de columnas, tipos, longitudes y restricciones. Las entidades JPA ya reflejan el esquema; los futuros servicios y formularios deberán respetar ambos archivos. Están implementados especialidades, médicos, pacientes, historias clínicas y citas. Diagnósticos, tratamientos, órdenes y reportes siguen pendientes.
 
 ## Campos por entidad
 
@@ -39,7 +39,7 @@ Estos valores se almacenan como texto. Los estados y tipos coinciden exactamente
 
 Para citas se adoptan los estados de los requisitos originales. `PENDIENTE` y `COMPLETADA` no son estados de cita; siguen siendo válidos para órdenes. La agenda y el futuro cálculo de ausentismo usarán `NO_ASISTIO`.
 
-Las transiciones permitidas entre estados y las reglas de disponibilidad se definirán en la etapa de citas. El esquema solo restringe los valores admitidos; no controla esas transiciones ni evita cruces de agenda.
+Las transiciones y la disponibilidad se validan en el servicio de citas según las reglas de agenda de este documento. El esquema restringe los valores admitidos; las reglas de transición y reserva se aplican en la aplicación.
 
 ## Fechas y horas
 
@@ -61,7 +61,7 @@ Las transiciones permitidas entre estados y las reglas de disponibilidad se defi
 | Diagnóstico → tratamientos | Un diagnóstico puede tener muchos tratamientos; cada tratamiento pertenece a un diagnóstico existente. |
 | Orden → detalles | Cada detalle pertenece a una orden existente. Una orden debe guardarse con al menos un detalle. |
 
-El esquema permite registrar un paciente antes de abrir su historia clínica. La restricción `UNIQUE` sobre `historia_clinica.id_paciente` impide una segunda historia, pero no obliga a crear la primera automáticamente.
+La aplicación y el esquema permiten registrar un paciente antes de abrir su historia clínica. La restricción `UNIQUE` sobre `historia_clinica.id_paciente` impide una segunda historia, pero no obliga a crear la primera automáticamente.
 
 El mínimo de un detalle por orden se implementará en el servicio, guardando la orden y sus detalles en una misma transacción. La clave foránea por sí sola no impide una orden sin detalles; esta regla queda pendiente de implementación en la etapa de órdenes.
 
@@ -74,7 +74,30 @@ El mínimo de un detalle por orden se implementará en el servicio, guardando la
 - `tratamiento.duracion_dias` y `detalle_orden.cantidad` deben ser enteros mayores que cero.
 - Todas las claves foráneas usan `ON DELETE RESTRICT`: no se puede eliminar un registro mientras otro lo referencie. No se borrará información relacionada en cascada.
 - Las claves foráneas conservan `ON UPDATE CASCADE`. Las claves primarias autogeneradas no serán campos editables en la aplicación.
-- `especialidad.activo` conserva su valor inicial `TRUE`. El comportamiento de las especialidades inactivas se definirá al implementar ese módulo.
+- `especialidad.activo` conserva su valor inicial `TRUE`. Una especialidad inactiva no admite médicos nuevos ni reasignaciones. Los médicos ya asociados mantienen esa especialidad y pueden conservarla al editar sus demás datos. Puede reactivarse sin perder asociaciones.
+
+## Pacientes e historias clínicas
+
+El registro de pacientes exige los campos obligatorios del esquema, una fecha de nacimiento válida no futura y uno de los valores de sexo definidos. Documento y correo son únicos dentro de pacientes; se conserva la comparación exacta del SQL. Los textos se recortan en los extremos. El tipo de documento sigue siendo texto libre de hasta 20 caracteres.
+
+Cada paciente tiene como máximo una historia clínica. El servicio bloquea el paciente durante la apertura para evitar creaciones simultáneas y mantiene la restricción única de la base como protección adicional. Si todavía no se abrió una historia, su consulta responde HTTP 204; un paciente inexistente responde 404.
+
+La apertura requiere grupo sanguíneo; antecedentes y alergias son opcionales. Un campo vacío indica que no se registró información, sin inferir ausencia de antecedentes o alergias. La fecha de apertura se asigna automáticamente en Bogotá y se conserva al editar. No se puede cambiar el paciente propietario ni eliminar la historia desde la aplicación.
+
+Desde la ficha del paciente se accede a su historia y a sus citas filtradas. Los selectores de referencias solo devuelven identificador, nombre y documento, con un máximo de 100 coincidencias y búsqueda adicional.
+
+## Reglas de agenda
+
+- Una cita nueva comienza como `PROGRAMADA`, requiere paciente y médico existentes, motivo y una fecha/hora futura. No se exige que el paciente tenga historia clínica para agendar.
+- Se aceptan horas con precisión de minutos; la API recibe una fecha ISO 8601 con desplazamiento, por ejemplo `2026-11-23T10:00:00-05:00`. La interfaz utiliza horario de Bogotá independientemente de la zona del navegador.
+- No pueden coexistir citas `PROGRAMADA` o `CONFIRMADA` para el mismo médico o paciente en el mismo instante, aunque la entrada use otro desplazamiento horario. El servicio bloquea primero al médico y luego al paciente durante la reserva para impedir altas simultáneas incompatibles.
+- El esquema no tiene duración, disponibilidad por turnos ni hora de finalización. Por tanto, el control se limita a instantes iguales; no se infieren intervalos, horarios de trabajo ni solapamientos de distinta hora.
+- Las citas activas se pueden reprogramar a una hora futura. Si cambia la hora, el paciente o el médico, vuelven a `PROGRAMADA`; si solo cambia el motivo, conservan el estado.
+- Desde `PROGRAMADA` se permite pasar a `CONFIRMADA`, `ATENDIDA`, `CANCELADA` o `NO_ASISTIO`. Desde `CONFIRMADA` se permite pasar a `ATENDIDA`, `CANCELADA` o `NO_ASISTIO`.
+- `ATENDIDA` y `NO_ASISTIO` solo pueden registrarse cuando llegó la hora de la cita. Cancelar no requiere esperar a su hora.
+- `ATENDIDA`, `CANCELADA` y `NO_ASISTIO` son estados finales: no se reabren ni se reprograman. Reenviar el mismo estado es una operación sin cambios. Para otra atención se crea una cita nueva.
+- Una cita cancelada deja libre su instante para futuras reservas. No se elimina físicamente la cita.
+- La consulta permite buscar por paciente, documento o médico y filtrar por paciente, médico, estado y rango de fechas. Los días se interpretan en Bogotá; `hasta` incluye todo el día indicado. Los listados están paginados.
 
 ## Alcance y pendientes
 
