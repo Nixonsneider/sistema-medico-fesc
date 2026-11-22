@@ -1,3 +1,5 @@
+import { openRecords, closeRecords } from './records.js';
+import { openOrders, closeOrders } from './orders.js';
 import { openClinical, closeClinical } from './clinical.js';
 import { openDirectory, closeDirectory } from './directory.js';
 
@@ -27,8 +29,16 @@ function route(focus = false) {
     const home = key === 'inicio';
     const directory = key === 'especialidades' || key === 'medicos';
     const clinical = ['pacientes', 'historias', 'citas'].includes(key);
+    const records = ['diagnosticos', 'tratamientos'].includes(key);
+    const orders = key === 'ordenes';
     document.querySelector('#home-view').hidden = !home;
-    document.querySelector('#module-view').hidden = home || directory || clinical;
+    document.querySelector('#module-view').hidden = home || directory || clinical || records || orders;
+    document.querySelector('#orders-view').hidden = !orders;
+    if (orders) openOrders(new URLSearchParams(routeQuery));
+    else closeOrders();
+    document.querySelector('#records-view').hidden = !records;
+    if (records) openRecords(key, new URLSearchParams(routeQuery));
+    else closeRecords();
     document.querySelector('#clinical-view').hidden = !clinical;
     if (clinical) openClinical(key, new URLSearchParams(routeQuery));
     else closeClinical();

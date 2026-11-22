@@ -2,7 +2,7 @@
 
 La plataforma permitirá gestionar especialidades, médicos, pacientes, citas, historias clínicas, diagnósticos, tratamientos y órdenes médicas con sus detalles.
 
-Este documento define las reglas funcionales de la primera versión. [schema.sql](../schema.sql) define sus tablas, nombres de columnas, tipos, longitudes y restricciones. Las entidades JPA ya reflejan el esquema; los futuros servicios y formularios deberán respetar ambos archivos. Están implementados especialidades, médicos, pacientes, historias clínicas y citas. Diagnósticos, tratamientos, órdenes y reportes siguen pendientes.
+Este documento define las reglas funcionales de la primera versión. [schema.sql](../schema.sql) define sus tablas, nombres de columnas, tipos, longitudes y restricciones. Las entidades JPA reflejan el esquema; los servicios y formularios respetan ambos archivos. Están implementados especialidades, médicos, pacientes, historias clínicas, citas, diagnósticos, tratamientos y órdenes con detalles. Reportes sigue pendiente.
 
 ## Campos por entidad
 
@@ -22,7 +22,7 @@ Los campos obligatorios deben tener un valor; los textos obligatorios no deben e
 | `tratamiento` | `medicamento`, `dosis`, `frecuencia`, `duracion_dias`, `id_diagnostico` | `indicaciones` | Ninguno |
 | `detalle_orden` | `descripcion`, `cantidad`, `id_orden` | `indicaciones` | `cantidad = 1` |
 
-Los valores predeterminados no sustituyen un `NULL` explícito. `tipo_documento` debe indicarse expresamente y no tiene un catálogo cerrado definido por ahora. Se mantienen como obligatorios el contacto del paciente y del médico y las observaciones de la orden, conforme al esquema.
+Los valores predeterminados no sustituyen un `NULL` explícito. `tipo_documento` debe indicarse expresamente: la aplicación admite `CC` (Cédula de Ciudadanía) y `TI` (Tarjeta de Identidad). Se mantienen como obligatorios el contacto del paciente y del médico y las observaciones de la orden, conforme al esquema.
 
 ## Estados y valores permitidos
 
@@ -63,7 +63,7 @@ Las transiciones y la disponibilidad se validan en el servicio de citas según l
 
 La aplicación y el esquema permiten registrar un paciente antes de abrir su historia clínica. La restricción `UNIQUE` sobre `historia_clinica.id_paciente` impide una segunda historia, pero no obliga a crear la primera automáticamente.
 
-El mínimo de un detalle por orden se implementará en el servicio, guardando la orden y sus detalles en una misma transacción. La clave foránea por sí sola no impide una orden sin detalles; esta regla queda pendiente de implementación en la etapa de órdenes.
+El servicio exige al menos un detalle por orden y guarda la orden con todos sus detalles en una misma transacción. Si una escritura falla, la transacción se revierte. La clave foránea por sí sola no impide una orden sin detalles; los datos introducidos directamente por SQL no pasan por esta validación del servicio.
 
 ## Unicidad, cantidades y eliminación
 
@@ -78,7 +78,7 @@ El mínimo de un detalle por orden se implementará en el servicio, guardando la
 
 ## Pacientes e historias clínicas
 
-El registro de pacientes exige los campos obligatorios del esquema, una fecha de nacimiento válida no futura y uno de los valores de sexo definidos. Documento y correo son únicos dentro de pacientes; se conserva la comparación exacta del SQL. Los textos se recortan en los extremos. El tipo de documento sigue siendo texto libre de hasta 20 caracteres.
+El registro de pacientes exige los campos obligatorios del esquema, una fecha de nacimiento válida no futura y uno de los valores de sexo definidos. Documento y correo son únicos dentro de pacientes; se conserva la comparación exacta del SQL. Los textos se recortan en los extremos. El tipo de documento se elige en un selector con Cédula de Ciudadanía (`CC`) y Tarjeta de Identidad (`TI`); el servicio valida esos dos valores. Los registros existentes no se migran automáticamente.
 
 Cada paciente tiene como máximo una historia clínica. El servicio bloquea el paciente durante la apertura para evitar creaciones simultáneas y mantiene la restricción única de la base como protección adicional. Si todavía no se abrió una historia, su consulta responde HTTP 204; un paciente inexistente responde 404.
 
@@ -98,6 +98,24 @@ Desde la ficha del paciente se accede a su historia y a sus citas filtradas. Los
 - `ATENDIDA`, `CANCELADA` y `NO_ASISTIO` son estados finales: no se reabren ni se reprograman. Reenviar el mismo estado es una operación sin cambios. Para otra atención se crea una cita nueva.
 - Una cita cancelada deja libre su instante para futuras reservas. No se elimina físicamente la cita.
 - La consulta permite buscar por paciente, documento o médico y filtrar por paciente, médico, estado y rango de fechas. Los días se interpretan en Bogotá; `hasta` incluye todo el día indicado. Los listados están paginados.
+
+## Diagnósticos y tratamientos
+
+- Cada diagnóstico requiere una cita existente, código CIE-10 de hasta 20 caracteres, descripción obligatoria de hasta 10 000 caracteres y uno de los cuatro tipos definidos. El formulario propone `PRESUNTIVO`; la API exige indicar el tipo.
+- El código CIE-10 se registra manualmente como texto, sin catálogo externo ni validación de existencia del código. No se exige un estado particular de la cita para registrar el diagnóstico.
+- Cada tratamiento requiere un diagnóstico existente, medicamento (hasta 150 caracteres), dosis y frecuencia (hasta 100 caracteres cada una), y duración en días como entero positivo dentro del rango de `INTEGER`. Se rechazan fracciones, sin truncarlas. Las indicaciones son opcionales.
+- Se pueden consultar y editar ambos registros, conservando su cita o diagnóstico original. No se permite trasladarlos a otra referencia ni eliminarlos físicamente desde la aplicación.
+- Una cita que ya tiene diagnósticos u órdenes no permite cambiar paciente ni médico para conservar el contexto clínico. Una cita activa puede cambiar de hora según las reglas de agenda.
+- Los listados son paginados y se filtran por cita o diagnóstico. La búsqueda de diagnósticos admite código o nombre del paciente; la de tratamientos, medicamento o código del diagnóstico. Los selectores devuelven hasta 100 referencias y permiten refinar la búsqueda.
+
+## Órdenes y detalles
+
+- Se emiten desde una cita existente, sin exigir un estado particular de la cita. Requieren uno de los cuatro tipos definidos, observaciones y al menos un detalle. La fecha se asigna automáticamente en Bogotá y el estado inicial es `PENDIENTE`.
+- Cada detalle requiere descripción y cantidad entera positiva dentro del rango de `INTEGER`; las indicaciones son opcionales. Se rechazan fracciones sin truncarlas. Observaciones, descripción e indicaciones admiten hasta 10 000 caracteres cada una.
+- Todos los detalles y su orden se guardan en una misma transacción. No se publican endpoints independientes para insertar detalles o guardar órdenes vacías.
+- Una orden `PENDIENTE` puede pasar a `COMPLETADA` o `CANCELADA`. Son estados finales y no se reabren. Reenviar el mismo estado no cambia el registro. La cancelación se confirma en la interfaz.
+- Las órdenes emitidas conservan su cita, fecha, tipo, observaciones y detalles. No se ofrece edición ni eliminación física: se cancela una orden pendiente y se emite otra cuando sea necesario.
+- El listado paginado admite búsqueda por nombre del paciente y filtros por cita y estado. Las observaciones e indicaciones se consultan únicamente en el detalle de la orden.
 
 ## Alcance y pendientes
 

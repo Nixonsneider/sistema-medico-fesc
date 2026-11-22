@@ -199,7 +199,12 @@ async function editor(mode, id) {
             ]);
             if (!valid(token) || serial !== view) return;
             if (mode !== 'view') form.elements.fechaHora.min = localDateTime(new Date(Date.now() + 60000));
-            if (mode === 'view') { currentAppointment = data; showState(data); }
+            if (mode === 'view') {
+                currentAppointment = data; showState(data);
+                const link = document.createElement('a'); link.className = 'button button-secondary'; link.textContent = 'Diagnósticos de la cita'; link.href = `#diagnosticos?cita=${id}`;
+                const orders = document.createElement('a'); orders.className = 'button button-secondary'; orders.textContent = 'Órdenes de la cita'; orders.href = `#ordenes?cita=${id}`;
+                el('clinical-related').replaceChildren(link, orders); el('clinical-related').hidden = false;
+            }
         }
         saveButton.disabled = false;
         form.querySelector('[data-cancel]').addEventListener('click', backToList);

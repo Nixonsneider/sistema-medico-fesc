@@ -1,6 +1,6 @@
 # Plan de desarrollo
 
-Estado: etapas 1 a 8 completadas. El usuario confirmó la conexión a su base mediante la respuesta `database OK` al ejecutar el proyecto desde NetBeans. Las etapas 9 a 11 siguen pendientes.
+Estado: etapas 1 a 11 completadas en implementación y comprobación técnica breve. El usuario confirmó la conexión a su base mediante la respuesta `database OK` al ejecutar el proyecto desde NetBeans. Por solicitud del usuario, la revisión manual final se realizará después; no se hizo una validación exhaustiva en esta entrega.
 
 El plan se basa en los requisitos de `docs/EstructuraProyecto.md`, el esquema `schema.sql` y la configuración actual del proyecto. Se avanzará módulo por módulo, dejando cada uno funcional y verificable antes de continuar.
 
@@ -107,6 +107,8 @@ El plan se basa en los requisitos de `docs/EstructuraProyecto.md`, el esquema `s
 
 **Interfaz:** formularios accesibles con datos personales y contacto, y consulta/edición de grupo sanguíneo, antecedentes y alergias. Los listados de pacientes omiten contacto y dirección; estos se consultan en la ficha individual. Los selectores de referencia tienen búsqueda y devuelven únicamente identificador, nombre y documento, hasta 100 coincidencias.
 
+**Ajuste posterior:** tipo de documento del paciente mediante selector obligatorio: Cédula de Ciudadanía (`CC`) o Tarjeta de Identidad (`TI`), con validación de los dos valores en el servicio.
+
 ## 8. Implementar citas
 
 - [x] Definir e implementar disponibilidad por instante, transiciones y estados finales según docs/EstructuraProyecto.md.
@@ -124,31 +126,39 @@ El plan se basa en los requisitos de `docs/EstructuraProyecto.md`, el esquema `s
 
 ## 9. Implementar diagnósticos y tratamientos
 
-- [ ] Registrar diagnósticos desde una cita.
-- [ ] Registrar tratamientos desde un diagnóstico.
-- [ ] Validar código CIE-10 obligatorio, descripción, tipo, medicamento, dosis, frecuencia y duración positiva.
-- [ ] Registrar el código CIE-10 como dato; una integración con un catálogo externo requeriría ampliar el alcance.
+- [x] Registrar diagnósticos desde una cita.
+- [x] Registrar tratamientos desde un diagnóstico.
+- [x] Validar código CIE-10 obligatorio, descripción, tipo, medicamento, dosis, frecuencia y duración positiva.
+- [x] Registrar el código CIE-10 como dato; una integración con un catálogo externo requeriría ampliar el alcance.
 
 **Resultado esperado:** información clínica vinculada a la atención correspondiente.
 
+**Resultado de la etapa 9:** registro, listado paginado, consulta y edición de diagnósticos y tratamientos mediante API y formularios. Acceso desde la cita a sus diagnósticos y desde cada diagnóstico a sus tratamientos. Búsqueda por código, paciente o medicamento según el módulo, filtros por referencia y selectores con hasta 100 coincidencias. Los vínculos de los registros se conservan al editar. Una cita con diagnósticos no permite cambiar paciente ni médico. No se añadió eliminación física ni catálogo externo CIE-10.
+
+**Verificación breve:** compilación y WAR correctos; una prueba de integración focalizada aprobada en PostgreSQL temporal, con altas, edición, consultas, referencias y duraciones inválidas (incluidas fracciones). Recorrido en navegador cita → diagnóstico → tratamiento con datos ficticios y revisión visual de escritorio. No se repitió la suite completa, no se modificó la base del usuario y no se hizo commit.
+
 ## 10. Implementar órdenes y detalles
 
-- [ ] Registrar órdenes desde una cita y añadir sus detalles.
-- [ ] Validar tipo, estado, cantidades e indicaciones.
-- [ ] Guardar la orden y sus detalles en una misma transacción.
-- [ ] Exigir al menos un detalle para cumplir el requisito funcional.
+- [x] Registrar órdenes desde una cita y añadir sus detalles.
+- [x] Validar tipo, estado, cantidades e indicaciones.
+- [x] Guardar la orden y sus detalles en una misma transacción.
+- [x] Exigir al menos un detalle para cumplir el requisito funcional.
 
 **Resultado esperado:** órdenes completas, sin registros parciales.
 
+**Resultado de la etapa 10:** API y formularios para emitir órdenes desde una cita, añadir o quitar detalles antes de guardar, listar con búsqueda/filtros/paginación y consultar la orden completa. Cantidades enteras positivas, textos obligatorios y referencias existentes. Fecha automática de Bogotá y estado inicial PENDIENTE; permite completar o cancelar con estados finales. Orden y detalles se guardan juntos, sin edición posterior ni eliminación física. Una cita con órdenes conserva su paciente y médico.
+
 ## 11. Verificar el recorrido completo y actualizar la documentación
 
-- [ ] Comprobar el flujo: especialidad → médico → paciente → historia clínica → cita → diagnóstico → tratamiento y orden con detalles.
-- [ ] Verificar persistencia, duplicados, relaciones inválidas, estados, errores y restricciones de eliminación.
-- [ ] Añadir pruebas automatizadas para las reglas y transacciones principales.
-- [ ] Revisar las interfaces según las directrices de diseño médico.
-- [ ] Actualizar el README con la ejecución real.
+- [x] Comprobar el flujo: especialidad → médico → paciente → historia clínica → cita → diagnóstico → tratamiento y orden con detalles, mediante una prueba integrada de servicios.
+- [x] Verificar las reglas principales de persistencia, duplicados, relaciones inválidas, estados, errores y restricciones de eliminación, con la prueba integrada y las comprobaciones de las etapas anteriores.
+- [x] Añadir pruebas automatizadas para las reglas y transacciones principales.
+- [x] Revisar la estructura de las interfaces según las directrices de diseño médico, reutilizando estilos y utilidades accesibles existentes.
+- [x] Actualizar el README con la ejecución real.
 
 **Resultado esperado:** primera versión integrada y documentada.
+
+**Cierre técnico de la etapa 11:** una sola ejecución de `ClinicalRecordsServiceTest` aprobada (sin fallos ni omisiones), ampliada al recorrido completo de servicios, con guardado/lectura de órdenes y detalles, historia duplicada, referencia inexistente, cantidades cero o fraccionarias, conservación de vínculos, estados finales y protección del SQL ante borrado de citas con órdenes. Compilación y WAR correctos y sintaxis de JavaScript revisada. No se repitió la suite completa ni se hizo una revisión extensa del navegador. La revisión manual con el usuario queda pospuesta; sus pasos están preparados en `docs/ConfiguracionLocal.md`. No se cambió el esquema ni la base de trabajo del usuario y no se hizo commit.
 
 ## Alcance pendiente
 

@@ -74,6 +74,8 @@ Ejemplo desde PowerShell, para una instancia de pruebas ya iniciada en el puerto
 
 Las pruebas validan el esquema existente con Hibernate y comprueban el recorrido por las nueve entidades, los estados almacenados como texto, las fechas, la restricción de una historia por paciente y la protección frente al borrado de una cita con información clínica asociada. No crean ni migran tablas.
 
+Para una comprobación breve del recorrido de servicios completo, añadir `-Dtest=ClinicalRecordsServiceTest` al comando anterior. Esa prueba recorre especialidad → médico → paciente → historia → cita → diagnóstico → tratamiento y orden con detalles, comprueba validaciones y estados, y elimina únicamente sus datos ficticios al terminar.
+
 
 ## Verificar pacientes, historias y citas
 
@@ -86,3 +88,15 @@ Tras reconstruir y ejecutar el proyecto en NetBeans:
 5. Para reprogramar una cita activa, volver al listado y usar Reprogramar. Un cambio de hora o participantes devuelve el estado a Programada.
 
 Los filtros de fecha incluyen días completos en Bogotá. No se calcula duración ni se bloquean intervalos entre horas distintas. Las pruebas de ClinicalServiceTest se ejecutan con la misma propiedad medico.test.jdbcUrl de la base independiente de pruebas e incluyen dos reservas simultáneas del mismo médico.
+
+## Revisión manual posterior del recorrido completo
+
+La implementación está terminada con una comprobación técnica breve. La revisión manual final se realizará cuando el usuario lo indique; estos pasos quedan preparados para ese momento:
+
+1. Reconstruir y ejecutar el proyecto en NetBeans con Tomcat y su archivo de conexión configurados. Comprobar `database OK`.
+2. Crear una especialidad y un médico asociado. Registrar un paciente seleccionando Cédula de Ciudadanía o Tarjeta de Identidad y abrir su historia clínica.
+3. Desde el paciente, programar y consultar una cita. Usar **Diagnósticos de la cita**, registrar un diagnóstico y abrir **Tratamientos** para registrar su tratamiento.
+4. Volver a consultar la cita y usar **Órdenes de la cita**. Registrar una orden con observaciones y uno o varios detalles. Comprobar que aparecen juntos en la consulta.
+5. Volver al listado, probar los filtros y consultar la orden. Marcarla como completada o cancelar una orden pendiente y comprobar el estado.
+
+No hace falta volver a ejecutar `schema.sql` para estas etapas: utilizan las nueve tablas existentes. Reportes continúa pendiente de implementación.

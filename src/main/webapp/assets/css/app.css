@@ -139,6 +139,23 @@ legend { margin-bottom: 14px; }
 #appointment-state-panel h3 { font-size: 15px; margin: 0 0 8px; }
 #appointment-state-form { align-items: flex-end; }
 #clinical-view .row-actions { flex-wrap: wrap; }
+#records-view .row-actions { flex-wrap: wrap; }
+#records-title:focus, #records-editor-title:focus { outline: none; }
+#records-retry { margin-bottom: 18px; }
+#records-view .notice { margin: 16px 0; }
+#records-view .directory-filters select { min-width: 0; }
+#orders-view .row-actions { flex-wrap: wrap; }
+#orders-view .row-actions select { min-width: 0; }
+#orders-view .directory-filters .field { flex: 1; }
+#orders-view .notice { margin: 16px 0; }
+#orders-title:focus, #orders-editor-title:focus { outline: none; }
+.order-details { margin: 18px 0; }
+.order-detail { padding: 18px 0; border-bottom: 1px solid var(--border); }
+.order-detail > .button { margin-top: 12px; }
+.order-summary dt { margin-top: 14px; font-weight: 600; }
+.order-summary dd { margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.order-detail-list { padding-left: 24px; }
+.order-detail-list li { padding: 12px 0; border-bottom: 1px solid var(--border); white-space: pre-wrap; overflow-wrap: anywhere; }
 @media (max-width: 1000px) {
     .app-layout { grid-template-columns: 210px minmax(0, 1fr); }
     main { padding: 26px 24px; }

@@ -33,6 +33,7 @@ public class PacienteService {
         if(data==null) throw ApplicationException.invalidData(Map.of());
         var validation=new DataValidation();
         String type=validation.required("tipoDocumento",data.tipoDocumento(),20);
+        if(type!=null && !List.of("CC","TI").contains(type)) validation.reject("tipoDocumento","Selecciona Cédula de Ciudadanía o Tarjeta de Identidad.");
         String document=validation.required("documento",data.documento(),20);
         String name=validation.required("nombre",data.nombre(),100);
         String surname=validation.required("apellido",data.apellido(),100);

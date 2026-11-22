@@ -21,6 +21,13 @@ public class CitaService {
     public CitaService(EntityManagerFactory factory) { this(factory,Clock.system(ZONE)); }
     CitaService(EntityManagerFactory factory, Clock clock) { work=new JpaWork(factory); this.clock=clock; }
 
+    public java.util.List<ClinicalOption> options(String query) {
+        String q=DataValidation.search(query,1,100);
+        var format=java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm").withZone(ZONE);
+        return work.read(manager -> repository.list(manager,q,null,null,null,null,null,1,100).stream().map(c -> new ClinicalOption(c.getIdCita(),
+                "Cita #"+c.getIdCita()+" · "+c.getPaciente().getNombre()+" "+c.getPaciente().getApellido()+" · "+format.format(c.getFechaHora()))).toList());
+    }
+
     public Page<CitaSummary> list(String query,Integer patient,Integer doctor,EstadoCita state,String from,String to,int page,int size) {
         String q=DataValidation.search(query,page,size);
         if(patient!=null) DataValidation.id(patient);
@@ -64,6 +71,9 @@ public class CitaService {
         return work.write(manager -> {
             Cita entity=id==null?new Cita():require(manager,id,true);
             if(!active(entity.getEstadoCita())) throw ApplicationException.conflict("Una cita finalizada no puede reprogramarse.",Map.of());
+            if(id!=null && (!entity.getPaciente().getIdPaciente().equals(data.idPaciente()) || !entity.getMedico().getIdMedico().equals(data.idMedico())) && (repository.hasDiagnosticos(manager,id) || repository.hasOrdenes(manager,id))) {
+                throw ApplicationException.conflict("No se pueden cambiar los participantes de una cita con diagnósticos u órdenes registrados.",Map.of());
+            }
             // Orden fijo: médico y luego paciente. Serializa reservas del mismo recurso.
             Medico doctor=manager.find(Medico.class,data.idMedico(),LockModeType.PESSIMISTIC_WRITE);
             Paciente patient=manager.find(Paciente.class,data.idPaciente(),LockModeType.PESSIMISTIC_WRITE);

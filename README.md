@@ -6,7 +6,7 @@ Proyecto de una plataforma web para gestionar pacientes, médicos, especialidade
 
 El repositorio contiene una aplicación Java web con Maven y Jakarta, una interfaz base con navegación, endpoints técnicos, el modelo JPA y el esquema SQL de los módulos previstos.
 
-El modelo de persistencia incluye las nueve entidades JPA y cuatro enumeraciones. Especialidades, médicos y pacientes cuentan con registro, listado, consulta y edición. También están disponibles la historia clínica única de cada paciente y la agenda de citas, con filtros, reprogramación y cambios de estado. Diagnósticos, tratamientos, órdenes y reportes siguen pendientes. La persistencia usa Hibernate y un pool HikariCP, con conexión PostgreSQL configurada en un archivo externo.
+El modelo de persistencia incluye las nueve entidades JPA y cuatro enumeraciones. Especialidades, médicos y pacientes cuentan con registro, listado, consulta y edición. También están disponibles la historia clínica única de cada paciente, la agenda de citas, diagnósticos, tratamientos y órdenes médicas con sus detalles. Las etapas 1 a 11 de TASKS.md están implementadas y cuentan con una comprobación técnica breve; la revisión manual final del usuario queda para después. Reportes sigue pendiente. La persistencia usa Hibernate y un pool HikariCP, con conexión PostgreSQL configurada en un archivo externo.
 
 ## Tecnologías y configuración
 
@@ -44,13 +44,16 @@ sistemaWebMedico/
 │   │   ├── entity/                  # Nueve entidades JPA
 │   │   ├── enums/                   # Cuatro enumeraciones de estados y tipos
 │   │   ├── error/                   # Contrato JSON y traducción de errores
-│   │   ├── repository/              # Consultas de catálogos, pacientes, historias y citas
+│   │   ├── repository/              # Consultas de catálogos, agenda e información clínica
 │   │   ├── service/                 # Validaciones y transacciones de los módulos
 │   │   └── resources/
 │   │       ├── EspecialidadResource.java
 │   │       ├── MedicoResource.java
 │   │       ├── PacienteResource.java
 │   │       ├── CitaResource.java
+│   │       ├── DiagnosticoResource.java
+│   │       ├── TratamientoResource.java
+│   │       ├── OrdenResource.java
 │   │       ├── DatabaseHealthResource.java
 │   │       └── JakartaEE11Resource.java
 │   ├── resources/META-INF/
@@ -83,11 +86,11 @@ El modelo JPA está implementado. Los repositorios y servicios de especialidades
 
 ## Interfaz y errores comunes
 
-La página inicial ofrece navegación lateral, un listado de módulos con búsqueda por nombre o descripción y vistas que indican su disponibilidad. La búsqueda del listado inicial admite texto sin tildes. Especialidades, médicos, pacientes, historias clínicas y citas están disponibles con datos de la base configurada; las demás secciones y reportes permanecen pendientes.
+La página inicial ofrece navegación lateral, un listado de módulos con búsqueda por nombre o descripción y vistas que indican su disponibilidad. La búsqueda del listado inicial admite texto sin tildes. Especialidades, médicos, pacientes, historias clínicas, citas, diagnósticos, tratamientos y órdenes están disponibles con datos de la base configurada. Reportes permanece pendiente.
 
 `assets/css/app.css` contiene estilos comunes para tablas, formularios, botones, avisos, indicadores, estados vacíos y diálogos. En móvil el menú es desplegable y las tablas tienen desplazamiento dentro de su contenedor. La interfaz incluye enlace para saltar al contenido, foco visible, etiquetas y estado del módulo activo.
 
-Los futuros formularios reutilizarán `assets/js/ui.js`: `validateForm` para campos obligatorios y restricciones nativas, `showFieldErrors` para mensajes del servidor, `setFeedback` para avisos, `setBusy` para bloquear envíos repetidos y `confirmAction` para confirmar operaciones destructivas. Cada campo debe tener etiqueta visible, un `name` coincidente con su mensaje de error y una indicación de obligatoriedad. Las utilidades conservan las ayudas de `aria-describedby`, asocian los errores al campo y enfocan el primer campo inválido. El servidor seguirá validando los datos independientemente del navegador.
+Los formularios reutilizan `assets/js/ui.js`: `validateForm` para campos obligatorios y restricciones nativas, `showFieldErrors` para mensajes del servidor, `setFeedback` para avisos, `setBusy` para bloquear envíos repetidos y `confirmAction` para confirmar operaciones destructivas. Cada campo tiene etiqueta visible, un `name` coincidente con su mensaje de error y una indicación de obligatoriedad. Las utilidades conservan las ayudas de `aria-describedby`, asocian los errores al campo y enfocan el primer campo inválido. El servidor valida los datos independientemente del navegador.
 
 `assets/js/api.js` exporta `request`, que resuelve las rutas REST con respecto al contexto del WAR, envía y recibe JSON y lanza `ApiRequestError` con `status`, `code`, `message` y `fields`. Los mensajes deben presentarse con `textContent` o las utilidades compartidas. Los endpoints técnicos de prueba y conexión conservan sus respuestas en texto.
 
@@ -154,7 +157,7 @@ Los listados responden con `{ "items": [], "total": 0, "page": 1, "pageSize": 20
 
 ## Pacientes, historias clínicas y citas
 
-Pacientes permite registrar, buscar, consultar y editar identificación, nacimiento, sexo, dirección y contacto. La fecha de nacimiento no puede ser futura; documento y correo no pueden repetirse en otro paciente. La ficha enlaza con su historia clínica y sus citas.
+Pacientes permite registrar, buscar, consultar y editar identificación, nacimiento, sexo, dirección y contacto. El tipo de documento se selecciona entre Cédula de Ciudadanía (`CC`) y Tarjeta de Identidad (`TI`). La fecha de nacimiento no puede ser futura; documento y correo no pueden repetirse en otro paciente. La ficha enlaza con su historia clínica y sus citas.
 
 La historia se abre desde un paciente existente y requiere grupo sanguíneo. Antecedentes y alergias son opcionales. Se permite consultar y editar su contenido, conservando la fecha de apertura y el paciente propietario. Se impide una segunda historia incluso ante solicitudes simultáneas.
 
@@ -175,6 +178,36 @@ Rutas adicionales relativas a `/resources`:
 | `PATCH` | `/citas/{id}/estado` | Actualizar con `{ "estado": "CONFIRMADA" }`. |
 
 La búsqueda de citas admite `q`, `idPaciente`, `idMedico`, `estado`, `desde`, `hasta`, `page` y `pageSize`. Las fechas de filtro usan `AAAA-MM-DD`; la fecha de nacimiento también. Las horas de citas incluyen desplazamiento: `2026-11-23T10:00:00-05:00`. Las fechas se transmiten como cadenas ISO, sin depender de la zona del equipo cliente. Los selectores muestran como máximo 100 referencias y permiten refinar la búsqueda. La lista de pacientes omite dirección y contacto; la agenda omite los motivos clínicos. Los datos completos se consultan en cada ficha o cita individual.
+
+## Diagnósticos y tratamientos
+
+Desde la consulta de una cita se accede a sus diagnósticos; desde cada diagnóstico, a sus tratamientos. Ambos módulos permiten registrar, consultar y editar, con búsqueda, filtros por referencia y paginación. Las relaciones se conservan al editar y no se ofrece eliminación física. Una cita con diagnósticos u órdenes no permite cambiar paciente ni médico; la reprogramación de una cita activa conserva las demás reglas de agenda.
+
+El diagnóstico requiere `idCita`, `codigoCie10` (hasta 20 caracteres), `descripcion` y `tipo` (`PRESUNTIVO`, `DEFINITIVO`, `PRINCIPAL` o `SECUNDARIO`). El código se introduce manualmente, sin validación contra un catálogo externo. El tratamiento requiere `idDiagnostico`, `medicamento`, `dosis`, `frecuencia` y `duracionDias`, un entero positivo sin redondear fracciones; `indicaciones` es opcional.
+
+Rutas relativas a `/resources`:
+
+| Método | Ruta | Operación |
+| --- | --- | --- |
+| `GET` / `POST` | `/diagnosticos` | Listar / registrar; filtros `q`, `idCita`, `page`, `pageSize`. |
+| `GET` / `PUT` | `/diagnosticos/{id}` | Consultar / editar conservando la cita. |
+| `GET` / `POST` | `/tratamientos` | Listar / registrar; filtros `q`, `idDiagnostico`, `page`, `pageSize`. |
+| `GET` / `PUT` | `/tratamientos/{id}` | Consultar / editar conservando el diagnóstico. |
+| `GET` | `/citas/opciones`, `/diagnosticos/opciones` | Buscar referencias por `q`, con hasta 100 coincidencias. |
+
+## Órdenes médicas
+
+Desde la consulta de una cita, usar **Órdenes de la cita** y **Registrar orden**. Seleccionar tipo, completar observaciones y añadir uno o varios detalles con descripción, cantidad entera positiva e indicaciones opcionales. La orden y todos sus detalles se guardan en una misma transacción; no se admite una orden vacía ni se redondean cantidades fraccionarias. Los textos admiten hasta 10 000 caracteres.
+
+La fecha se asigna automáticamente en Bogotá y el estado inicial es `PENDIENTE`. La consulta muestra todos los detalles y permite marcar la orden como `COMPLETADA` o `CANCELADA`; la cancelación pide confirmación. Los estados finales no se reabren. No se ofrece edición de la orden emitida ni borrado físico: se cancela y se registra otra cuando sea necesario. La cita original se conserva. El listado permite buscar por nombre del paciente, filtrar por cita o estado y paginar de 20 en 20.
+
+| Método | Ruta relativa a `/resources` | Operación |
+| --- | --- | --- |
+| `GET` / `POST` | `/ordenes` | Listar / emitir con `idCita`, `tipoOrden`, `observaciones` y `detalles`. |
+| `GET` | `/ordenes/{id}` | Consultar la orden y sus detalles. |
+| `PATCH` | `/ordenes/{id}/estado` | Cambiar con `{ "estado": "COMPLETADA" }` o `CANCELADA`. |
+
+El listado admite `q`, `idCita`, `estado`, `page` y `pageSize`. Cada elemento de `detalles` recibe `descripcion`, `cantidad` e `indicaciones` opcionales. Solo se admiten `LABORATORIO`, `IMAGENOLOGIA`, `MEDICAMENTO` y `REMISION` como tipo.
 
 ## Modelo de datos
 
@@ -208,7 +241,7 @@ Las relaciones son unidireccionales desde el registro que contiene la clave for�
 
 `EstadoCita`, `EstadoOrden`, `TipoOrden` y `TipoDiagnostico` usan `EnumType.STRING`, con columnas `VARCHAR`. Sexo y grupo sanguíneo conservan sus textos del esquema. Las citas usan `OffsetDateTime` y almacenamiento nativo `TIMESTAMPTZ`, preservando el instante aunque PostgreSQL normalice el desplazamiento. Las fechas sin hora usan `LocalDate`. Al persistir una historia u orden sin fecha, `@PrePersist` la completa con la fecha de `America/Bogota`; las fechas suministradas se conservan.
 
-Hibernate mantiene desactivada la creación y modificación automática de tablas. Las validaciones funcionales y el guardado de una orden con sus detalles en una transacción corresponden a las etapas de servicios.
+Hibernate mantiene desactivada la creación y modificación automática de tablas. Los servicios aplican las validaciones funcionales y guardan cada orden con sus detalles en una transacción local.
 
 ## Preparación y ejecución
 
@@ -238,6 +271,8 @@ psql -h localhost -U <usuario> -d <base_de_datos> -f schema.sql
 ```
 
 El script crea las tablas; no crea la base de datos ni inserta datos iniciales. Está pensado para una base vacía y no incluye comprobaciones para volver a ejecutarlo sobre tablas existentes.
+
+Para cargar datos ficticios de todos los módulos, abrir [datos_prueba.sql](datos_prueba.sql) en Query Tool de pgAdmin y ejecutarlo completo sobre la base de pruebas con las tablas ya creadas. Incluye citas pasadas y futuras respecto al día de ejecución, pacientes con y sin historia y órdenes con detalles. No borra datos existentes y rechaza una segunda carga del conjunto DEMO.
 
 La conexión se configura en `config/database.properties`, excluido de Git, a partir de `config/database.properties.example`. La base local prevista es `sistema-web-medico` y el usuario es `postgres`. Completar la contraseña localmente y configurar `-Dmedico.db.config` o `MEDICO_DB_CONFIG` con la ruta absoluta del archivo antes de iniciar Tomcat. Las instrucciones para NetBeans están en [Configuración local](docs/ConfiguracionLocal.md). Hibernate no crea ni modifica las tablas automáticamente.
 

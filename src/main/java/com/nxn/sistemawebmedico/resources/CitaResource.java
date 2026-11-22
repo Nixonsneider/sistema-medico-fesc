@@ -19,6 +19,7 @@ public class CitaResource {
             @QueryParam("page") @DefaultValue("1") int page,@QueryParam("pageSize") @DefaultValue("20") int size) {
         return service().list(q,patient,doctor,state,from,to,page,size);
     }
+    @GET @Path("opciones") public java.util.List<ClinicalOption> options(@QueryParam("q") String q) { return service().options(q); }
     @GET @Path("{id}") public CitaResponse get(@PathParam("id") int id) { return service().get(id); }
     @POST @Consumes(MediaType.APPLICATION_JSON) public Response create(CitaRequest data) {
         var saved=service().save(null,data);

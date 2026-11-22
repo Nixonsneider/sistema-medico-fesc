@@ -8,6 +8,12 @@ import java.time.OffsetDateTime;
 import java.util.List;
 
 public class CitaRepository {
+    public boolean hasDiagnosticos(EntityManager manager,int id) {
+        return manager.createQuery("select count(d) from Diagnostico d where d.cita.idCita = :id",Long.class).setParameter("id",id).getSingleResult()>0;
+    }
+    public boolean hasOrdenes(EntityManager manager,int id) {
+        return manager.createQuery("select count(o) from Orden o where o.cita.idCita = :id",Long.class).setParameter("id",id).getSingleResult()>0;
+    }
     private static final String SEARCH = " where (lower(concat(concat(c.paciente.nombre, ' '), c.paciente.apellido)) like :q escape '!'"
             + " or lower(concat(concat(c.medico.nombre, ' '), c.medico.apellido)) like :q escape '!'"
             + " or lower(c.paciente.documento) like :q escape '!')";
