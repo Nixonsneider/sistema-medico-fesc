@@ -1,6 +1,6 @@
 # Plan de desarrollo
 
-Estado: etapas 1 a 11 completadas en implementación y comprobación técnica breve. El usuario confirmó la conexión a su base mediante la respuesta `database OK` al ejecutar el proyecto desde NetBeans. Por solicitud del usuario, la revisión manual final se realizará después; no se hizo una validación exhaustiva en esta entrega.
+Estado: etapas 1 a 12 completadas en implementación y comprobación técnica breve. El usuario confirmó la conexión a su base mediante la respuesta `database OK` al ejecutar el proyecto desde NetBeans. Por solicitud del usuario, la revisión manual final se realizará después; no se hizo una validación exhaustiva en esta entrega.
 
 El plan se basa en los requisitos de `docs/EstructuraProyecto.md`, el esquema `schema.sql` y la configuración actual del proyecto. Se avanzará módulo por módulo, dejando cada uno funcional y verificable antes de continuar.
 
@@ -160,9 +160,21 @@ El plan se basa en los requisitos de `docs/EstructuraProyecto.md`, el esquema `s
 
 **Cierre técnico de la etapa 11:** una sola ejecución de `ClinicalRecordsServiceTest` aprobada (sin fallos ni omisiones), ampliada al recorrido completo de servicios, con guardado/lectura de órdenes y detalles, historia duplicada, referencia inexistente, cantidades cero o fraccionarias, conservación de vínculos, estados finales y protección del SQL ante borrado de citas con órdenes. Compilación y WAR correctos y sintaxis de JavaScript revisada. No se repitió la suite completa ni se hizo una revisión extensa del navegador. La revisión manual con el usuario queda pospuesta; sus pasos están preparados en `docs/ConfiguracionLocal.md`. No se cambió el esquema ni la base de trabajo del usuario y no se hizo commit.
 
+## 12. Implementar reportes sobre el modelo actual
+
+- [x] Filtros por fechas de cita, médico, especialidad, estado de cita/orden y paciente.
+- [x] Indicadores, gráfico por estado y tablas paginadas bajo demanda mediante Generar.
+- [x] Agenda, productividad, demanda horaria, morbilidad, demografía, órdenes, cumplimiento, servicios y resumen clínico individual.
+- [x] Exportación completa CSV, Excel y PDF, hasta 10000 filas, y auditoría de generación en los logs de Tomcat.
+- [x] Adaptar `docs/ModuloReportes.md` al esquema actual, sin añadir campos, según la decisión del usuario.
+
+**Alcance:** pacientes con citas sustituye pacientes nuevos; no se infieren zonas ni vencimientos. Los tipos de orden conservan los cuatro existentes. La auditoría indica SIN_AUTENTICACION hasta disponer de usuarios. Las fórmulas, fechas y filtros se explican en `docs/ModuloReportes.md`. Revisión manual final pendiente con el usuario.
+
+**Verificación breve:** prueba integrada aprobada en PostgreSQL temporal: los nueve reportes, filtros combinados, resumen clínico, validación de paciente y generación CSV/XLSX/PDF. Compilación y WAR correctos, sintaxis JavaScript revisada. No se ejecutó una revisión extensa en navegador ni se modificó la base del usuario. Sin commit.
+
 ## Alcance pendiente
 
-- **Reportes:** queda pendiente hasta que el usuario lo indique, como establece la documentación. Su especificación está en [Módulo de reportes](docs/ModuloReportes.md).
+- **Reportes:** implementado en la etapa 12 con el alcance adaptado a las nueve tablas actuales.
 - **Usuarios, roles y autenticación:** no forman parte de estos requisitos; su incorporación requeriría definir ese alcance.
 
 Las propuestas técnicas y las reglas aún no definidas se concretarán antes de implementar las tareas correspondientes.

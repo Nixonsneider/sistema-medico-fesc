@@ -60,6 +60,24 @@ class ClinicalRecordsServiceTest {
                 var order=orders.create(new OrdenRequest(otherCita,TipoOrden.LABORATORIO,"Observaciones de prueba",List.of(detail,detail)));
                 assertEquals(EstadoOrden.PENDIENTE,order.orden().estado());
                 assertEquals(2,orders.get(order.orden().idOrden()).detalles().size());
+                var reports=new ReportService(factory);
+                for(String type:List.of("agenda","productividad","demanda","morbilidad","demografia","ordenes","cumplimiento","servicios","historia")) {
+                    var filter=new ReportFilter(); filter.tipo=type; filter.idPaciente=patients.get(0);
+                    var report=reports.generate(filter,false);
+                    assertFalse(report.columnas().isEmpty());
+                    assertEquals("2",report.indicadores().get("Total citas"));
+                    if(type.equals("historia")) {
+                        assertTrue(report.filas().stream().anyMatch(row->row.contains("Historia base")));
+                        assertTrue(report.filas().stream().anyMatch(row->row.contains("Tratamiento")));
+                        for(String format:List.of("csv","xlsx","pdf")) assertTrue(ReportExport.generate(report,format).length>100);
+                    }
+                    filter.desde=when.toLocalDate().toString(); filter.hasta=filter.desde;
+                    filter.idMedico=medico; filter.idEspecialidad=specialty; filter.estadoCita="PROGRAMADA"; filter.estadoOrden="PENDIENTE";
+                    var filtered=reports.generate(filter,true);
+                    assertEquals("1",filtered.indicadores().get("Total citas"));
+                }
+                var invalidFilter=new ReportFilter(); invalidFilter.tipo="historia";
+                assertEquals(400,assertThrows(ApplicationException.class,()->reports.generate(invalidFilter,false)).getError().status());
                 assertEquals(1,orders.list("Paciente",otherCita,EstadoOrden.PENDIENTE,1,20).total());
                 assertEquals(400,assertThrows(ApplicationException.class,()->orders.create(new OrdenRequest(otherCita,TipoOrden.LABORATORIO,"Texto",List.of()))).getError().status());
                 assertEquals(400,assertThrows(ApplicationException.class,()->orders.create(new OrdenRequest(Integer.MAX_VALUE,TipoOrden.LABORATORIO,"Texto",List.of(detail)))).getError().status());

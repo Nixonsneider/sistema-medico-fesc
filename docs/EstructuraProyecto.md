@@ -2,7 +2,7 @@
 
 La plataforma permitirá gestionar especialidades, médicos, pacientes, citas, historias clínicas, diagnósticos, tratamientos y órdenes médicas con sus detalles.
 
-Este documento define las reglas funcionales de la primera versión. [schema.sql](../schema.sql) define sus tablas, nombres de columnas, tipos, longitudes y restricciones. Las entidades JPA reflejan el esquema; los servicios y formularios respetan ambos archivos. Están implementados especialidades, médicos, pacientes, historias clínicas, citas, diagnósticos, tratamientos y órdenes con detalles. Reportes sigue pendiente.
+Este documento define las reglas funcionales de la primera versión. [schema.sql](../schema.sql) define sus tablas, nombres de columnas, tipos, longitudes y restricciones. Las entidades JPA reflejan el esquema; los servicios y formularios respetan ambos archivos. Están implementados especialidades, médicos, pacientes, historias clínicas, citas, diagnósticos, tratamientos y órdenes con detalles. Reportes está disponible con el alcance de docs/ModuloReportes.md.
 
 ## Campos por entidad
 
@@ -121,6 +121,6 @@ Desde la ficha del paciente se accede a su historia y a sus citas filtradas. Los
 
 La creación del esquema se realiza sobre una base PostgreSQL vacía. `schema.sql` no migra bases existentes ni convierte datos con los estados anteriores de citas.
 
-El módulo de reportes se desarrollará únicamente cuando el usuario lo indique. Su propuesta está en [ModuloReportes.md](ModuloReportes.md). Esa propuesta contempla datos todavía no modelados, como fecha de registro del paciente, zona demográfica, vencimiento de órdenes e identificación del usuario que exporta. También menciona terapias e interconsultas, que no son valores adicionales de `tipo_orden` en esta versión. Estas diferencias se resolverán al definir el alcance de reportes, sin ampliar ahora las nueve entidades.
+El módulo de reportes está implementado según [ModuloReportes.md](ModuloReportes.md), adaptado por decisión del usuario a las nueve tablas actuales. Ofrece consultas bajo demanda, indicadores, gráfico, tabla paginada y exportación CSV, Excel y PDF. No se calculan pacientes nuevos, zonas ni vencimientos sin datos de origen; pacientes con citas sustituye el indicador de altas. La auditoría usa SIN_AUTENTICACION hasta disponer de usuarios. Se conservan los cuatro tipos actuales de orden.
 
 Usuarios, roles y autenticación no están definidos en estos requisitos.

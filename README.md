@@ -1,12 +1,28 @@
-# Sistema Web Médico
+# Sistema Web Médico — Versión 1.0
 
-Proyecto de una plataforma web para gestionar pacientes, médicos, especialidades, citas y la información clínica asociada: historias clínicas, diagnósticos, tratamientos y órdenes médicas.
+Aplicación web para gestionar pacientes, médicos, especialidades, citas, historias clínicas, diagnósticos, tratamientos, órdenes médicas y reportes.
 
 ## Estado actual
 
-El repositorio contiene una aplicación Java web con Maven y Jakarta, una interfaz base con navegación, endpoints técnicos, el modelo JPA y el esquema SQL de los módulos previstos.
+La **versión funcional 1.0** incluye todos los módulos de las etapas 1 a 12 de [TASKS.md](TASKS.md). Se completaron la implementación y las comprobaciones técnicas breves; la revisión manual final con el usuario sigue pendiente. Esto no sustituye una validación exhaustiva para un despliegue de producción.
 
-El modelo de persistencia incluye las nueve entidades JPA y cuatro enumeraciones. Especialidades, médicos y pacientes cuentan con registro, listado, consulta y edición. También están disponibles la historia clínica única de cada paciente, la agenda de citas, diagnósticos, tratamientos y órdenes médicas con sus detalles. Las etapas 1 a 11 de TASKS.md están implementadas y cuentan con una comprobación técnica breve; la revisión manual final del usuario queda para después. Reportes sigue pendiente. La persistencia usa Hibernate y un pool HikariCP, con conexión PostgreSQL configurada en un archivo externo.
+El modelo de persistencia incluye nueve entidades JPA y cuatro enumeraciones. La aplicación usa PostgreSQL, Hibernate y un pool HikariCP, con credenciales en un archivo externo. Los reportes están implementados con el [alcance acordado](docs/ModuloReportes.md), sobre las tablas existentes.
+
+La denominación de esta entrega es **1.0**; el `pom.xml` conserva por ahora la versión técnica `1.0-SNAPSHOT`, por lo que el archivo generado sigue llamándose `sistemaWebMedico-1.0-SNAPSHOT.war`.
+
+### Qué incluye y qué queda fuera
+
+- Especialidades y médicos: registro, consulta, edición y activación/desactivación de especialidades.
+- Pacientes: registro y edición con selector de documento CC/TI, búsqueda y datos de contacto.
+- Historia clínica única por paciente, con grupo sanguíneo, antecedentes y alergias.
+- Citas: programación, filtros, reprogramación y cambios de estado.
+- Diagnósticos y tratamientos vinculados a la cita y al diagnóstico correspondiente.
+- Órdenes con uno o varios detalles, consulta y estados pendiente, completada o cancelada.
+- Nueve reportes con filtros, indicadores, gráfico, paginación y exportación CSV, Excel y PDF.
+
+Usuarios, roles y autenticación no están implementados: el sistema no solicita inicio de sesión. Las exportaciones registran `SIN_AUTENTICACION` mientras no exista un usuario autenticado. No se calculan pacientes nuevos, zonas ni vencimientos de órdenes porque esos campos no existen. Los códigos CIE-10 se introducen manualmente, sin catálogo externo.
+
+La guía de arranque está en [Preparación y ejecución](#preparación-y-ejecución). Para detalles del entorno Windows, consultar [Configuración local](docs/ConfiguracionLocal.md).
 
 ## Tecnologías y configuración
 
@@ -23,7 +39,7 @@ El modelo de persistencia incluye las nueve entidades JPA y cuatro enumeraciones
 | Base de datos | Esquema SQL con sintaxis de PostgreSQL |
 | IDE | Configuración compartida de Apache NetBeans |
 
-El servidor de referencia es Tomcat 11 con JDK 17 o superior (verificado con JDK 21). El WAR incluye Jersey, Weld, Hibernate, HikariCP y el controlador PostgreSQL. La API Servlet es `provided`; las APIs REST, Persistence y CDI llegan con sus implementaciones. Tomcat no ofrece la plataforma Jakarta EE completa. Las transacciones JPA serán locales y gestionadas explícitamente por la aplicación.
+El servidor de referencia es Tomcat 11 con JDK 17 o superior (verificado con JDK 21 y PostgreSQL 18). El WAR incluye Jersey, Weld, Hibernate, HikariCP y el controlador PostgreSQL. La API Servlet es `provided`; las APIs REST, Persistence y CDI llegan con sus implementaciones. Tomcat no ofrece la plataforma Jakarta EE completa. Las transacciones JPA son locales y gestionadas explícitamente por la aplicación.
 
 ## Estructura del proyecto
 
@@ -54,6 +70,7 @@ sistemaWebMedico/
 │   │       ├── DiagnosticoResource.java
 │   │       ├── TratamientoResource.java
 │   │       ├── OrdenResource.java
+│   │       ├── ReportResource.java
 │   │       ├── DatabaseHealthResource.java
 │   │       └── JakartaEE11Resource.java
 │   ├── resources/META-INF/
@@ -71,6 +88,7 @@ sistemaWebMedico/
 ├── nb-configuration.xml              # Configuración compartida de NetBeans
 ├── pom.xml                           # Dependencias y plugins de Maven
 ├── TASKS.md                          # Plan y seguimiento del desarrollo
+├── datos_prueba.sql                  # Datos ficticios opcionales de todos los módulos
 └── schema.sql                        # Creación de las nueve tablas
 ```
 
@@ -80,13 +98,13 @@ Maven genera los archivos compilados y el WAR en `target/`.
 
 Se mantiene una sola aplicación Maven con un único `pom.xml` y un WAR. Los paquetes Java están dentro de `com.nxn.sistemawebmedico`; cada paquete tiene un `package-info.java` con su responsabilidad.
 
-El flujo previsto para los módulos es `resources → service → repository`, utilizando las entidades de `entity` y los tipos de `enums`. Los servicios delimitarán las transacciones locales; los repositorios realizarán las consultas con `EntityManager`. `config` mantiene el ciclo de vida de la fábrica JPA y del pool. `JakartaRestConfiguration` conserva la configuración REST en el paquete raíz y la ruta `/resources`.
+El flujo habitual de los módulos es `resources → service → repository`, utilizando las entidades de `entity` y los tipos de `enums`. Los servicios delimitan las transacciones locales y los repositorios consultan con `EntityManager`. Reportes realiza consultas SQL de lectura parametrizadas desde su servicio. `config` mantiene el ciclo de vida de la fábrica JPA y del pool. `JakartaRestConfiguration` conserva la configuración REST en el paquete raíz y la ruta `/resources`.
 
 El modelo JPA está implementado. Los repositorios y servicios de especialidades y médicos realizan las consultas y transacciones; el paquete `dto` separa los datos de entrada y salida de las entidades persistentes. El paquete `error` define el contrato público de errores y su traducción HTTP. Los endpoints técnicos existentes conservan su comportamiento. Las vistas permanecen en `src/main/webapp`, con HTML, CSS y JavaScript; no se incorpora otro proyecto frontend ni nuevas dependencias en esta etapa.
 
 ## Interfaz y errores comunes
 
-La página inicial ofrece navegación lateral, un listado de módulos con búsqueda por nombre o descripción y vistas que indican su disponibilidad. La búsqueda del listado inicial admite texto sin tildes. Especialidades, médicos, pacientes, historias clínicas, citas, diagnósticos, tratamientos y órdenes están disponibles con datos de la base configurada. Reportes permanece pendiente.
+La página inicial ofrece navegación lateral, un listado de módulos con búsqueda por nombre o descripción y vistas que indican su disponibilidad. La búsqueda del listado inicial admite texto sin tildes. Especialidades, médicos, pacientes, historias clínicas, citas, diagnósticos, tratamientos y órdenes están disponibles con datos de la base configurada. Reportes está disponible con filtros, indicadores y exportación CSV, Excel y PDF.
 
 `assets/css/app.css` contiene estilos comunes para tablas, formularios, botones, avisos, indicadores, estados vacíos y diálogos. En móvil el menú es desplegable y las tablas tienen desplazamiento dentro de su contenedor. La interfaz incluye enlace para saltar al contenido, foco visible, etiquetas y estado del módulo activo.
 
@@ -117,7 +135,7 @@ Los errores REST comunes usan este formato:
 
 Los servicios podrán usar `ApplicationException` para errores funcionales; los mensajes por campo deben ser comprensibles y no incluir datos clínicos ni valores privados. `ApiExceptionMapper` también reconoce restricciones PostgreSQL en excepciones anidadas. Las respuestas no incluyen SQL, trazas ni mensajes internos del controlador, y conservan las cabeceras HTTP necesarias, como `Allow` en un error 405. Este contrato cubre la API bajo `/resources`; los errores de arranque y las páginas estáticas de Tomcat se gestionan fuera de Jersey.
 
-## Módulos previstos
+## Módulos disponibles en la versión 1.0
 
 | Módulo | Responsabilidad |
 | --- | --- |
@@ -130,9 +148,9 @@ Los servicios podrán usar `ApplicationException` para errores funcionales; los 
 | Tratamientos | Registrar medicamento, dosis, frecuencia, duración e indicaciones de un diagnóstico. |
 | Órdenes médicas | Emitir órdenes de laboratorio, imagenología, medicamento o remisión desde una cita. |
 | Detalles de orden | Registrar descripción, cantidad e indicaciones de los elementos de una orden. |
-| Reportes | Consultar indicadores operativos y clínicos y exportar información; desarrollo pendiente. |
+| Reportes | Consultar indicadores operativos y clínicos y exportar CSV, Excel y PDF. |
 
-Los requisitos se encuentran en [Estructura del proyecto](docs/EstructuraProyecto.md). El alcance de reportes se describe en [Módulo de reportes](docs/ModuloReportes.md), y su implementación queda para una etapa posterior.
+Los requisitos se encuentran en [Estructura del proyecto](docs/EstructuraProyecto.md). El alcance de reportes se describe en [Módulo de reportes](docs/ModuloReportes.md), implementado sobre las nueve tablas actuales.
 
 ## Especialidades y médicos
 
@@ -209,6 +227,12 @@ La fecha se asigna automáticamente en Bogotá y el estado inicial es `PENDIENTE
 
 El listado admite `q`, `idCita`, `estado`, `page` y `pageSize`. Cada elemento de `detalles` recibe `descripcion`, `cantidad` e `indicaciones` opcionales. Solo se admiten `LABORATORIO`, `IMAGENOLOGIA`, `MEDICAMENTO` y `REMISION` como tipo.
 
+## Reportes
+
+Desde el menú Reportes, elegir reporte y filtros y pulsar **Generar**. Se incluyen agenda, productividad, demanda, diagnósticos frecuentes, demografía, órdenes, cumplimiento, servicios y resumen clínico individual. La pantalla muestra indicadores, gráfico por estado y tabla paginada. Buscar primero las opciones de médico, especialidad o paciente si se desea filtrar por ellas.
+
+Se puede exportar la selección completa como CSV, Excel o PDF (hasta 10000 filas). Las fechas se aplican a las citas en Bogotá. El resumen clínico requiere paciente. Las exportaciones generan eventos en el logger `medico.auditoria.exportaciones` de Tomcat, con actor SIN_AUTENTICACION mientras no haya usuarios. No hace falta modificar el esquema. Fórmulas, filtros y limitaciones: [Módulo de reportes](docs/ModuloReportes.md).
+
 ## Modelo de datos
 
 El archivo [schema.sql](schema.sql) define las tablas y sus restricciones. Las relaciones son:
@@ -237,7 +261,7 @@ Las citas se crean por defecto como `PROGRAMADA`. Los campos obligatorios y opci
 
 Las nueve entidades se registran explícitamente en `persistence.xml`. Sus claves `Integer` se generan con `IDENTITY` y no tienen setters públicos. Se respetan las columnas, longitudes, campos opcionales y restricciones únicas del esquema.
 
-Las relaciones son unidireccionales desde el registro que contiene la clave foránea: siete `ManyToOne` y una `OneToOne` entre historia clínica y paciente. Usan carga `LAZY`, sin `CascadeType.REMOVE`, `CascadeType.ALL` ni eliminación de huérfanos. Las consultas inversas se implementarán en los repositorios.
+Las relaciones son unidireccionales desde el registro que contiene la clave foránea: siete `ManyToOne` y una `OneToOne` entre historia clínica y paciente. Usan carga `LAZY`, sin `CascadeType.REMOVE`, `CascadeType.ALL` ni eliminación de huérfanos. Las consultas inversas se realizan explícitamente en los repositorios o servicios de lectura.
 
 `EstadoCita`, `EstadoOrden`, `TipoOrden` y `TipoDiagnostico` usan `EnumType.STRING`, con columnas `VARCHAR`. Sexo y grupo sanguíneo conservan sus textos del esquema. Las citas usan `OffsetDateTime` y almacenamiento nativo `TIMESTAMPTZ`, preservando el instante aunque PostgreSQL normalice el desplazamiento. Las fechas sin hora usan `LocalDate`. Al persistir una historia u orden sin fecha, `@PrePersist` la completa con la fecha de `America/Bogota`; las fechas suministradas se conservan.
 
@@ -252,47 +276,113 @@ Hibernate mantiene desactivada la creación y modificación automática de tabla
 - Apache Tomcat 11.
 - PostgreSQL y su cliente `psql` si se desea crear el esquema de datos.
 
-### Compilar
+### 1. Preparar PostgreSQL
 
-Desde la raíz del proyecto:
+Iniciar PostgreSQL y crear una base vacía llamada `sistema-web-medico`, por ejemplo desde pgAdmin. El usuario local previsto es `postgres`.
+
+En **Query Tool** de esa base, abrir [schema.sql](schema.sql) y ejecutarlo completo **solo si todavía no existen las tablas**. El script crea las nueve tablas; no crea la base de datos ni migra esquemas existentes. Hibernate tampoco crea ni modifica tablas automáticamente.
+
+Como alternativa, desde una terminal con `psql` disponible:
+
+```sh
+psql -h localhost -U postgres -d sistema-web-medico -v ON_ERROR_STOP=1 -1 -f schema.sql
+```
+
+Para disponer de datos ficticios, ejecutar después [datos_prueba.sql](datos_prueba.sql) completo en Query Tool. Incluye todos los módulos, citas pasadas y futuras respecto al día de carga, pacientes con y sin historia y órdenes con detalles. Es opcional: la aplicación también permite comenzar con las tablas vacías. No borra datos existentes y rechaza una segunda carga del conjunto DEMO. Si una ejecución falla y pgAdmin deja una transacción abortada, ejecutar `ROLLBACK;` antes de continuar.
+
+### 2. Configurar la conexión local
+
+Copiar `config/database.properties.example` como `config/database.properties` **si este último aún no existe**. Completar localmente:
+
+```properties
+db.url=jdbc:postgresql://localhost:5432/sistema-web-medico
+db.user=postgres
+db.password=TU_CONTRASENA_LOCAL
+```
+
+Ajustar host, puerto, base y usuario si el entorno es diferente. Este archivo está excluido de Git y no se incorpora al WAR. No publicar la contraseña. Su formato es `java.util.Properties`: las barras invertidas se escriben como `\\` y los caracteres no ASCII pueden expresarse con escapes `\uXXXX`.
+
+### 3. Configurar Tomcat en NetBeans
+
+1. Abrir la carpeta del proyecto como proyecto Maven y permitir la descarga de dependencias en la primera construcción.
+2. En **Servicios → Servidores**, registrar Apache Tomcat 11 si todavía no está registrado. Seleccionar el servidor en las propiedades de ejecución del proyecto.
+3. Abrir las propiedades del servidor y entrar en **Platform / Plataforma → VM Options / Opciones de máquina virtual**. Añadir la propiedad siguiente, conservando cualquier otra opción existente y ajustando la ruta al equipo:
+
+```text
+-Dmedico.db.config="D:/Documents/NetBeansProjects/sistemaWebMedico/config/database.properties"
+```
+
+La ruta apunta al archivo de conexión, no a una carpeta. Como alternativa se puede definir `MEDICO_DB_CONFIG` con la ruta absoluta antes de iniciar NetBeans/Tomcat. La propiedad Java tiene prioridad. Detener y volver a iniciar Tomcat después de cambiar esta configuración.
+
+### 4. Construir y ejecutar
+
+En NetBeans: **clic derecho en el proyecto → Clean and Build / Limpiar y construir**, y después **Run / Ejecutar**. Construir genera el WAR; ejecutar además despliega la aplicación y permite abrirla. Evitar iniciar simultáneamente otra instancia de Tomcat con los mismos puertos.
+
+Para compilar desde terminal, en la raíz del proyecto:
 
 ```sh
 mvn clean package
 ```
 
-El artefacto esperado es `target/sistemaWebMedico-1.0-SNAPSHOT.war`. El repositorio no incluye Maven Wrapper. `mvn test` comprueba el arranque del modelo sin conexión; las pruebas de integración PostgreSQL requieren una base de pruebas separada, según [Configuración local](docs/ConfiguracionLocal.md).
+En este equipo, también se puede utilizar Maven de NetBeans desde PowerShell:
 
-### Preparar la base de datos
-
-Crear una base de datos vacía en PostgreSQL y ejecutar el esquema sobre ella, sustituyendo los valores del ejemplo:
-
-```sh
-psql -h localhost -U <usuario> -d <base_de_datos> -f schema.sql
+```powershell
+& 'C:/Program Files/Apache NetBeans/java/maven/bin/mvn.cmd' clean package
 ```
 
-El script crea las tablas; no crea la base de datos ni inserta datos iniciales. Está pensado para una base vacía y no incluye comprobaciones para volver a ejecutarlo sobre tablas existentes.
+La primera compilación necesita acceso a los repositorios de dependencias. El resultado es `target/sistemaWebMedico-1.0-SNAPSHOT.war`. No se necesita instalar un proyecto frontend, ejecutar npm ni copiar manualmente el controlador JDBC a Tomcat.
 
-Para cargar datos ficticios de todos los módulos, abrir [datos_prueba.sql](datos_prueba.sql) en Query Tool de pgAdmin y ejecutarlo completo sobre la base de pruebas con las tablas ya creadas. Incluye citas pasadas y futuras respecto al día de ejecución, pacientes con y sin historia y órdenes con detalles. No borra datos existentes y rechaza una segunda carga del conjunto DEMO.
-
-La conexión se configura en `config/database.properties`, excluido de Git, a partir de `config/database.properties.example`. La base local prevista es `sistema-web-medico` y el usuario es `postgres`. Completar la contraseña localmente y configurar `-Dmedico.db.config` o `MEDICO_DB_CONFIG` con la ruta absoluta del archivo antes de iniciar Tomcat. Las instrucciones para NetBeans están en [Configuración local](docs/ConfiguracionLocal.md). Hibernate no crea ni modifica las tablas automáticamente.
-
-### Desplegar y comprobar
-
-1. Configurar el servidor de aplicaciones y desplegar el WAR generado. En NetBeans, abrir el proyecto Maven, seleccionar el servidor y ejecutarlo desde el IDE.
-2. Comprobar el contexto asignado por el servidor. El archivo `context.xml` declara `/sistemaWebMedico`; la dirección definitiva depende del despliegue.
-3. Consultar el endpoint REST de prueba:
+Con el contexto `/sistemaWebMedico` y puerto 8080, abrir:
 
 ```text
-GET /<contexto>/resources/jakartaee11
+http://localhost:8080/sistemaWebMedico/
 ```
 
-Con el contexto declarado y un servidor local en el puerto 8080, la URL sería:
+El contexto y puerto efectivos dependen del despliegue. Usar la dirección que muestre NetBeans si es diferente.
 
-```text
-http://localhost:8080/sistemaWebMedico/resources/jakartaee11
-```
+**También se puede ejecutar sin NetBeans:** configurar `MEDICO_DB_CONFIG` en el entorno que inicia Tomcat (o la propiedad Java equivalente), copiar el WAR en `webapps` de Tomcat 11 y arrancar el servidor. Si se conserva el nombre `sistemaWebMedico-1.0-SNAPSHOT.war`, el contexto habitual será `/sistemaWebMedico-1.0-SNAPSHOT`; para usar el contexto de los ejemplos, desplegarlo como `sistemaWebMedico.war`. Configurar la conexión antes del arranque y usar una sola instancia para ese despliegue.
 
-La respuesta esperada es HTTP `200` con el cuerpo `ping Jakarta EE`. Para verificar PostgreSQL a través de JPA, consultar `GET /<contexto>/resources/health/db`: responde `200` con `database OK`, o `503` si la conexión falla después del arranque. Una configuración ausente o inválida impide el arranque de la aplicación.
+### 5. Comprobar el arranque
+
+Con la aplicación ejecutada:
+
+| Dirección, con puerto 8080 y contexto `/sistemaWebMedico` | Resultado esperado |
+| --- | --- |
+| `/sistemaWebMedico/` | Página inicial con los módulos disponibles. |
+| `/sistemaWebMedico/resources/jakartaee11` | HTTP 200: `ping Jakarta EE`. |
+| `/sistemaWebMedico/resources/health/db` | HTTP 200: `database OK`. |
+
+El endpoint de base de datos comprueba la conexión mediante `SELECT 1`; no verifica que existan todas las tablas. Si faltan credenciales o no se inicializa la persistencia, la aplicación puede no arrancar. Si la conexión falla después del arranque, el endpoint responde 503.
+
+### 6. Recorrido de uso
+
+1. Registrar una especialidad activa y un médico asociado.
+2. Registrar un paciente con CC o TI; consultar su ficha y abrir su única historia clínica.
+3. Desde el paciente, programar una cita futura y seleccionar un médico existente.
+4. Consultar la cita para confirmar, cancelar, atender o registrar inasistencia. Atención e inasistencia requieren que haya llegado la hora.
+5. Desde **Diagnósticos de la cita**, registrar el diagnóstico y acceder a sus **Tratamientos**.
+6. Desde **Órdenes de la cita**, registrar tipo, observaciones y uno o más detalles; consultar y completar o cancelar la orden.
+7. Entrar en **Reportes**, elegir el reporte, buscar las referencias si se quieren aplicar filtros y pulsar **Generar**. El resumen clínico exige paciente; las exportaciones incluyen toda la selección, hasta 10000 filas.
+
+Con los datos DEMO se puede explorar este recorrido sin registrar todo desde cero. Sus medicamentos y códigos son ficticios y no corresponden a prescripciones reales.
+
+### Problemas habituales
+
+| Situación | Qué revisar |
+| --- | --- |
+| `BUILD SUCCESS` pero la página no abre | La construcción terminó; comprobar que también se ejecutó **Run** y que Tomcat desplegó el proyecto. |
+| HTTP 404 | Verificar puerto, contexto y que la aplicación esté desplegada y arrancada. La URL de conexión incluye el contexto antes de `/resources/health/db`. |
+| «El contexto no pudo arrancar» | Revisar los logs de Tomcat: archivo de conexión, ruta de VM Options, credenciales, PostgreSQL iniciado y compatibilidad con Tomcat 11. |
+| Paquetes `jakarta` no encontrados en NetBeans | Recargar el proyecto Maven, comprobar la descarga de dependencias y el JDK configurado y ejecutar Clean and Build. No cambiar los imports a `javax` ni añadir JAR manualmente. |
+| Puerto ocupado | Detener la otra instancia de Tomcat o usar puertos distintos; no iniciar a la vez el mismo servidor desde fuera y desde NetBeans. |
+| `database OK` pero errores al abrir módulos | Comprobar que las nueve tablas de `schema.sql` existen en la base configurada. |
+| Reporte vacío | Revisar fechas de las citas en Bogotá, estados y referencias seleccionadas. Cambiar filtros y volver a pulsar Generar. |
+
+### Comprobaciones y revisión pendiente
+
+`mvn test` ejecuta las pruebas sin conexión y omite las pruebas PostgreSQL cuando no se proporciona `medico.test.jdbcUrl`. Las pruebas de integración requieren una base **separada**, con las tablas creadas; no usar la base de trabajo. Las instrucciones están en [Configuración local](docs/ConfiguracionLocal.md).
+
+Se verificaron compilación, persistencia y reglas principales en etapas anteriores. La última comprobación breve incluyó los nueve reportes con filtros y generación de archivos CSV/XLSX/PDF. La revisión manual final completa de la versión 1.0 sigue pendiente con el usuario.
 
 ## Directrices de desarrollo
 

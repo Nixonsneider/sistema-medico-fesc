@@ -99,4 +99,4 @@ La implementación está terminada con una comprobación técnica breve. La revi
 4. Volver a consultar la cita y usar **Órdenes de la cita**. Registrar una orden con observaciones y uno o varios detalles. Comprobar que aparecen juntos en la consulta.
 5. Volver al listado, probar los filtros y consultar la orden. Marcarla como completada o cancelar una orden pendiente y comprobar el estado.
 
-No hace falta volver a ejecutar `schema.sql` para estas etapas: utilizan las nueve tablas existentes. Reportes continúa pendiente de implementación.
+No hace falta volver a ejecutar `schema.sql` para estas etapas: utilizan las nueve tablas existentes. Reportes se consulta desde el menú: elegir filtros y pulsar Generar.
